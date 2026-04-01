@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Aurora DL | Premium Video Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-reflection {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+        }
+        .aurora-glow {
+            filter: blur(100px);
+            opacity: 0.15;
+            z-index: -1;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "inverse-on-surface": "#555460",
+                        "tertiary-dim": "#e4006c",
+                        "surface-container": "#181825",
+                        "on-secondary-container": "#eef9ff",
+                        "tertiary-container": "#fc0078",
+                        "surface-container-low": "#12121e",
+                        "surface-tint": "#eb87ff",
+                        "surface-container-high": "#1e1e2c",
+                        "error-container": "#a70138",
+                        "tertiary-fixed": "#ff8eac",
+                        "surface-dim": "#0d0d17",
+                        "outline-variant": "#474753",
+                        "inverse-primary": "#a000c2",
+                        "on-primary-fixed-variant": "#4f0061",
+                        "on-tertiary-fixed": "#380015",
+                        "surface-container-highest": "#252433",
+                        "on-surface": "#e7e3f3",
+                        "outline": "#757481",
+                        "on-tertiary-fixed-variant": "#760035",
+                        "on-secondary-fixed-variant": "#00586d",
+                        "on-primary": "#530065",
+                        "on-tertiary": "#47001d",
+                        "on-primary-container": "#40004f",
+                        "on-tertiary-container": "#000000",
+                        "primary-dim": "#c207ea",
+                        "error-dim": "#d73357",
+                        "on-error-container": "#ffb2b9",
+                        "on-secondary": "#004050",
+                        "surface-container-lowest": "#000000",
+                        "surface-bright": "#2b2b3b",
+                        "primary-container": "#e56fff",
+                        "primary": "#eb87ff",
+                        "secondary-fixed": "#80deff",
+                        "on-error": "#490013",
+                        "error": "#ff6e84",
+                        "secondary-container": "#00677f",
+                        "on-primary-fixed": "#000000",
+                        "surface": "#0d0d17",
+                        "secondary": "#00cffc",
+                        "tertiary-fixed-dim": "#ff769e",
+                        "surface-variant": "#252433",
+                        "on-background": "#e7e3f3",
+                        "on-surface-variant": "#aca9b8",
+                        "tertiary": "#ff6b98",
+                        "primary-fixed-dim": "#df54ff",
+                        "secondary-fixed-dim": "#37d4ff",
+                        "primary-fixed": "#e56fff",
+                        "inverse-surface": "#fcf8ff",
+                        "secondary-dim": "#00c0ea",
+                        "on-secondary-fixed": "#003a48",
+                        "background": "#0d0d17"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen flex flex-col overflow-x-hidden">
+<!-- Background Atmospheric Elements -->
+<div class="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary aurora-glow"></div>
+<div class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-secondary aurora-glow"></div>
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-8 py-3 max-w-6xl mx-auto rounded-full mt-4 mx-4 bg-white/5 dark:bg-slate-950/40 backdrop-blur-xl border border-white/10 dark:border-white/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+<div class="flex items-center gap-2">
+<span class="text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-[#eb87ff] to-[#00cffc]">Aurora DL</span>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a id="navInicio" class="text-violet-400 font-bold border-b-2 border-[#00cffc] pb-1 cursor-pointer" onclick="switchView('inicio')">Inicio</a>
+<a id="navPlaylists" class="text-slate-400 hover:text-white transition-colors cursor-pointer" onclick="switchView('playlists')">Playlists</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-white/10 transition-all text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- SideNavBar (Mobile Trigger Hidden for now) -->
+<aside class="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 z-40 flex-col p-6 bg-[#0d0d17]/80 backdrop-blur-2xl rounded-r-3xl h-[calc(100vh-2rem)] my-4 shadow-2xl">
+<div class="flex flex-col gap-1 mb-8 pt-20">
+<div class="flex items-center gap-3 px-4 py-2">
+<div class="w-10 h-10 rounded-xl overflow-hidden border border-primary/20 bg-primary/20 flex flex-col items-center justify-center font-bold">
+A
+</div>
+<div>
+<p class="font-headline font-bold text-sm text-white">Usuario</p>
+<p class="text-xs text-secondary">Descargador Pro</p>
+</div>
+</div>
+</div>
+<nav class="flex flex-col gap-2 flex-grow">
+<button class="flex items-center gap-4 px-4 py-3 rounded-xl bg-gradient-to-r from-[#eb87ff]/20 to-transparent border-l-4 border-[#eb87ff] text-white">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+<span class="font-medium text-sm">Descargas</span>
+</button>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-32 pb-20 px-6 md:pl-80 max-w-7xl mx-auto w-full">
+<!-- Hero Section -->
+<section class="mb-12">
+<h1 class="font-headline text-5xl md:text-6xl font-extrabold tracking-tight mb-4 max-w-2xl">
+                Descarga la <span class="text-primary italic">esencia</span> de internet.
+            </h1>
+<p class="text-on-surface-variant text-lg max-w-xl">
+                Almacena tus videos, audios y playlists favoritas en la mejor calidad posible de forma instantánea, privada y elegante.
+            </p>
+</section>
+<!-- ================== VISTA INICIO (VIDEO ÚNICO) ================== -->
+<div id="view-inicio" class="space-y-8">
+<!-- Input Glass Card -->
+<div class="relative group" id="input-container">
+<div class="absolute -inset-0.5 bg-gradient-to-r from-primary to-secondary rounded-2xl blur opacity-20 group-focus-within:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+<div class="relative bg-surface-container-high/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row gap-4 items-center">
+<div class="relative flex-grow w-full">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline" data-icon="link">link</span>
+<input id="videoUrl" class="w-full bg-surface-container-lowest border-0 rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-secondary/50 transition-all outline-none" placeholder="Pega aquí el enlace de YouTube..." type="text"/>
+</div>
+<button id="btnProcesar" onclick="obtenerInfo()" class="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-primary to-secondary text-surface-container-lowest font-black rounded-xl hover:shadow-[0_0_20px_rgba(0,207,252,0.4)] active:scale-95 transition-all flex items-center justify-center gap-2">
+                        Procesar
+                        <span class="material-symbols-outlined text-lg">bolt</span>
+</button>
+</div>
+<!-- Error State  -->
+<div id="errorMsg" class="hidden mt-4 flex items-center gap-3 p-4 bg-error-container/40 backdrop-blur-md border border-error/20 rounded-xl text-error">
+<span class="material-symbols-outlined">error</span>
+<p id="errorText" class="text-sm font-medium">No se pudo procesar el enlace. Por favor, verifica la URL e intenta de nuevo.</p>
+</div>
+</div>
+<!-- Loading State -->
+<div class="hidden py-12 flex flex-col items-center justify-center gap-6" id="loader">
+<div class="relative w-20 h-20">
+<div class="absolute inset-0 rounded-full border-4 border-primary/20"></div>
+<div class="absolute inset-0 rounded-full border-4 border-t-secondary animate-spin"></div>
+<div class="absolute inset-4 rounded-full bg-primary/10 blur-xl animate-pulse"></div>
+</div>
+<p class="text-on-surface-variant font-medium animate-pulse" id="loaderText">Analizando flujos de datos...</p>
+</div>
+<!-- Result State -->
+<div class="hidden grid-cols-1 md:grid-cols-3 gap-6" id="resultCard" style="display: none;">
+<!-- Main Result Card -->
+<div class="md:col-span-2 bg-surface-container-high/40 backdrop-blur-xl border border-white/5 rounded-2xl overflow-hidden flex flex-col">
+<div class="relative aspect-video w-full overflow-hidden">
+<img id="resThumb" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src=""/>
+<div class="absolute top-4 right-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">schedule</span>
+<span id="resDuration">00:00</span>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-high via-transparent to-transparent"></div>
+</div>
+<div class="p-6 flex flex-col gap-4">
+<h3 id="resTitle" class="font-headline text-2xl font-bold text-white leading-tight">Video Title</h3>
+
+<div class="flex items-center gap-3 mb-2">
+    <span class="text-on-surface-variant text-sm font-bold uppercase tracking-widest">Calidad de Video:</span>
+    <select id="videoQuality" class="bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-white outline-none focus:ring-1 focus:ring-primary/50 transition-all text-sm font-bold">
+        <option value="">Óptima (Automático)</option>
+    </select>
+</div>
+
+<div class="flex flex-wrap gap-4">
+<button id="btnMp3" onclick="descargarArchivo('mp3')" class="flex-grow flex items-center justify-center gap-3 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all group">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">music_note</span>
+<span id="txtBtnMp3" class="font-semibold">🎵 Descargar MP3 (Audio)</span>
+</button>
+<button id="btnMp4" onclick="descargarArchivo('mp4')" class="flex-grow flex items-center justify-center gap-3 py-4 bg-primary text-on-primary-container rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">movie</span>
+<span id="txtBtnMp4" class="font-semibold text-black">🎬 Descargar MP4 (Video)</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Secondary Metadata -->
+<div class="flex flex-col gap-6">
+<div class="p-6 bg-secondary/10 backdrop-blur-xl border border-secondary/20 rounded-2xl">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-secondary">verified</span>
+<h4 class="text-sm font-bold text-white uppercase tracking-widest">Privacidad Total</h4>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+                            Todos los archivos son descargados y gestionados localmente para garantizar una privacidad del 100%.
+                        </p>
+</div>
+</div>
+</div>
+</div> <!-- FIN VISTA INICIO -->
+
+<!-- ================== VISTA PLAYLISTS ================== -->
+<div id="view-playlists" class="space-y-8 hidden">
+<div class="relative group" id="p-input-container">
+<div class="absolute -inset-0.5 bg-gradient-to-r from-[#8957e5] to-[#fc0078] rounded-2xl blur opacity-20 group-focus-within:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+<div class="relative bg-surface-container-high/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row gap-4 items-center">
+<div class="relative flex-grow w-full">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline" data-icon="playlist_add">playlist_add</span>
+<input id="playlistUrl" class="w-full bg-surface-container-lowest border-0 rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-[#fc0078]/50 transition-all outline-none" placeholder="Pega el enlace de la Playlist aquí..." type="text"/>
+</div>
+<button id="btnPProcesar" onclick="obtenerPlaylistInfo()" class="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-[#8957e5] to-[#fc0078] text-white font-black rounded-xl hover:shadow-[0_0_20px_rgba(252,0,120,0.4)] active:scale-95 transition-all flex items-center justify-center gap-2">
+                        Analizar Playlist
+                        <span class="material-symbols-outlined text-lg">sync</span>
+</button>
+</div>
+<div id="p-errorMsg" class="hidden mt-4 flex items-center gap-3 p-4 bg-error-container/40 backdrop-blur-md border border-error/20 rounded-xl text-error">
+<span class="material-symbols-outlined">error</span>
+<p id="p-errorText" class="text-sm font-medium">Error.</p>
+</div>
+</div>
+
+<!-- Loader Playlist -->
+<div class="hidden py-12 flex flex-col items-center justify-center gap-6" id="p-loader">
+<div class="relative w-20 h-20">
+<div class="absolute inset-0 rounded-full border-4 border-white/5"></div>
+<div class="absolute inset-0 rounded-full border-4 border-t-[#fc0078] animate-spin"></div>
+<div class="absolute inset-4 rounded-full bg-[#fc0078]/10 blur-xl animate-pulse"></div>
+</div>
+<p class="text-on-surface-variant font-medium animate-pulse" id="p-loaderText">Extrayendo datos de la lista (esto puede tardar unos segundos)...</p>
+</div>
+
+<!-- Result Playlist -->
+<div class="hidden grid-cols-1 gap-6" id="p-resultCard" style="display: none;">
+<div class="bg-surface-container-high/40 backdrop-blur-xl border border-white/5 rounded-2xl overflow-hidden p-8 flex flex-col gap-6 text-center">
+    <div class="w-20 h-20 mx-auto rounded-full bg-[#fc0078]/20 flex items-center justify-center mb-2">
+        <span class="material-symbols-outlined text-[#fc0078] text-4xl">queue_music</span>
+    </div>
+    <h3 id="p-resTitle" class="font-headline text-3xl font-bold text-white leading-tight">Título de la Playlist</h3>
+    <p class="text-on-surface-variant text-lg">Total de Videos encontrados: <span id="p-resCount" class="font-bold text-white">0</span></p>
+    
+    <div class="flex flex-wrap gap-4 mt-4 justify-center">
+    <button id="p-btnMp3" onclick="descargarPlaylist('mp3')" class="flex-grow max-w-xs flex items-center justify-center gap-3 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all">
+        <span class="material-symbols-outlined text-[#fc0078]">library_music</span>
+        <span id="p-txtBtnMp3" class="font-semibold text-white">🎵 Descargar toda en MP3</span>
+    </button>
+    <button id="p-btnMp4" onclick="descargarPlaylist('mp4')" class="flex-grow max-w-xs flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-[#8957e5] to-[#fc0078] text-white rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-[#fc0078]/20">
+        <span class="material-symbols-outlined">video_library</span>
+        <span id="p-txtBtnMp4" class="font-semibold">🎬 Descargar toda en MP4</span>
+    </button>
+    </div>
+</div>
+</div>
+</div> <!-- FIN VISTA PLAYLISTS -->
+
+<!-- Success State (Floating Modal Simulation) -->
+<div id="successModal" class="hidden fixed bottom-12 left-1/2 -translate-x-1/2 z-[60] w-full max-w-md px-6" style="display: none;">
+<div class="bg-surface-container-highest/90 backdrop-blur-2xl border-2 border-primary/30 rounded-2xl p-5 shadow-2xl flex items-center gap-4 transition-all hover:scale-105">
+<div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div>
+<p id="successTitle" class="font-bold text-white">¡Descargado exitosamente!</p>
+<p id="successPath" class="text-xs text-on-surface-variant truncate">En: /Downloads/AuroraDL/NeonNights.mp4</p>
+</div>
+<button onclick="document.getElementById('successModal').style.display = 'none'" class="ml-auto text-on-surface-variant hover:text-white">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-8 px-12 flex flex-col md:flex-row justify-between items-center gap-4 border-t border-white/5 bg-surface-container-low/30 mt-auto">
+<p class="text-xs font-medium Inter tracking-widest uppercase text-slate-500">© 2026 Aurora DL. Todos los derechos reservados.</p>
+</footer>
+
+<script>
+    // Navegación estilo SPA
+    function switchView(view) {
+        document.getElementById('view-inicio').style.display = view === 'inicio' ? 'block' : 'none';
+        document.getElementById('view-playlists').style.display = view === 'playlists' ? 'block' : 'none';
+        
+        const navInicio = document.getElementById('navInicio');
+        const navPlay = document.getElementById('navPlaylists');
+        
+        if(view === 'inicio'){
+            navInicio.className = "text-violet-400 font-bold border-b-2 border-[#00cffc] pb-1 cursor-pointer";
+            navPlay.className = "text-slate-400 hover:text-white transition-colors cursor-pointer";
+        } else {
+            navPlay.className = "text-violet-400 font-bold border-b-2 border-[#fc0078] pb-1 cursor-pointer";
+            navInicio.className = "text-slate-400 hover:text-white transition-colors cursor-pointer";
+        }
+    }
+
+    // --- LOGICA DE VIDEO ÚNICO ---
+    async function obtenerInfo() {
+        const urlInput = document.getElementById('videoUrl').value.trim();
+        const btn = document.getElementById('btnProcesar');
+        const loader = document.getElementById('loader');
+        const errorMsg = document.getElementById('errorMsg');
+        const resultCard = document.getElementById('resultCard');
+        const successModal = document.getElementById('successModal');
+
+        if(!urlInput) return;
+
+        errorMsg.style.display = 'none';
+        resultCard.style.display = 'none';
+        successModal.style.display = 'none';
+        
+        loader.style.display = 'flex';
+        document.getElementById('loaderText').innerText = "Analizando enlace mediante API...";
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('http://localhost:5000/api/info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: urlInput })
+            });
+            
+            const data = await response.json();
+            
+            if(!response.ok || data.error) {
+                throw new Error(data.error || 'Error al obtener la información');
+            }
+
+            document.getElementById('resTitle').textContent = data.title || 'Video sin título';
+            document.getElementById('resThumb').src = data.thumbnail || '';
+            document.getElementById('resDuration').textContent = `${data.duration || '--'}`;
+            
+            const qSelect = document.getElementById('videoQuality');
+            if (qSelect) {
+                qSelect.innerHTML = '<option value="">Óptima (Automática)</option>';
+                if(data.qualities && data.qualities.length > 0) {
+                    data.qualities.forEach(q => {
+                        qSelect.innerHTML += `<option value="${q}">${q}p</option>`;
+                    });
+                }
+            }
+
+            loader.style.display = 'none';
+            resultCard.style.display = 'grid';
+
+        } catch (error) {
+            loader.style.display = 'none';
+            document.getElementById('errorText').textContent = "Error: " + error.message;
+            errorMsg.style.display = 'flex';
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    // Función para descargar a la carpeta local
+    async function descargarArchivo(formato) {
+        const urlInput = document.getElementById('videoUrl').value.trim();
+        const errorMsg = document.getElementById('errorMsg');
+        const btnMp4 = document.getElementById('btnMp4');
+        const btnMp3 = document.getElementById('btnMp3');
+        const txtMp4 = document.getElementById('txtBtnMp4');
+        const txtMp3 = document.getElementById('txtBtnMp3');
+        const successModal = document.getElementById('successModal');
+        
+        const qSelect = document.getElementById('videoQuality');
+        const qualityVal = qSelect ? qSelect.value : '';
+
+        errorMsg.style.display = 'none';
+        const originalTextMp4 = txtMp4.innerText;
+        const originalTextMp3 = txtMp3.innerText;
+
+        btnMp4.disabled = true;
+        btnMp3.disabled = true;
+        successModal.style.display = 'none';
+
+        if(formato === 'mp3') {
+            txtMp3.innerText = "⏳ Convirtiendo...";
+        } else {
+            txtMp4.innerText = "⏳ Descargando...";
+        }
+
+        try {
+            const response = await fetch('http://localhost:5000/api/download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: urlInput, format: formato, quality: qualityVal })
+            });
+            
+            const data = await response.json();
+            
+            if(!response.ok || data.error) {
+                throw new Error(data.error || 'Error en la descarga');
+            }
+
+            document.getElementById('successTitle').innerText = data.title;
+            document.getElementById('successPath').innerText = "Guardado en directorio Descargas local";
+            successModal.style.display = 'flex';
+            
+        } catch (error) {
+            document.getElementById('errorText').textContent = "Error de descarga: " + error.message;
+            errorMsg.style.display = 'flex';
+        } finally {
+            btnMp4.disabled = false;
+            btnMp3.disabled = false;
+            txtMp4.innerText = originalTextMp4;
+            txtMp3.innerText = originalTextMp3;
+        }
+    }
+
+    // --- LOGICA DE PLAYLISTS ---
+    async function obtenerPlaylistInfo() {
+        const urlInput = document.getElementById('playlistUrl').value.trim();
+        const btn = document.getElementById('btnPProcesar');
+        const loader = document.getElementById('p-loader');
+        const errorMsg = document.getElementById('p-errorMsg');
+        const resultCard = document.getElementById('p-resultCard');
+        const successModal = document.getElementById('successModal');
+
+        if(!urlInput) return;
+
+        errorMsg.style.display = 'none';
+        resultCard.style.display = 'none';
+        successModal.style.display = 'none';
+        
+        loader.style.display = 'flex';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('http://localhost:5000/api/playlist/info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: urlInput })
+            });
+            
+            const data = await response.json();
+            
+            if(!response.ok || data.error) {
+                throw new Error(data.error || 'Error listando la playlist');
+            }
+
+            document.getElementById('p-resTitle').textContent = data.title || 'Playlist sin título';
+            document.getElementById('p-resCount').textContent = data.count || '0';
+            
+            loader.style.display = 'none';
+            resultCard.style.display = 'grid';
+
+        } catch (error) {
+            loader.style.display = 'none';
+            document.getElementById('p-errorText').textContent = "Error: " + error.message;
+            errorMsg.style.display = 'flex';
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function descargarPlaylist(formato) {
+        const urlInput = document.getElementById('playlistUrl').value.trim();
+        const errorMsg = document.getElementById('p-errorMsg');
+        const btnMp4 = document.getElementById('p-btnMp4');
+        const btnMp3 = document.getElementById('p-btnMp3');
+        const txtMp4 = document.getElementById('p-txtBtnMp4');
+        const txtMp3 = document.getElementById('p-txtBtnMp3');
+        const successModal = document.getElementById('successModal');
+
+        errorMsg.style.display = 'none';
+        const originalTextMp4 = txtMp4.innerText;
+        const originalTextMp3 = txtMp3.innerText;
+
+        btnMp4.disabled = true;
+        btnMp3.disabled = true;
+        successModal.style.display = 'none';
+
+        if(formato === 'mp3') {
+            txtMp3.innerText = "⏳ Procesando toda la Playlist (Audio)...";
+        } else {
+            txtMp4.innerText = "⏳ Procesando toda la Playlist (Video)...";
+        }
+
+        try {
+            const response = await fetch('http://localhost:5000/api/playlist/download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: urlInput, format: formato })
+            });
+            
+            const data = await response.json();
+            
+            if(!response.ok || data.error) {
+                throw new Error(data.error || 'Error localizando/descargando archivos');
+            }
+
+            document.getElementById('successTitle').innerText = "¡Playlist procesada y guardada!";
+            document.getElementById('successPath').innerText = "En carpeta: " + data.path;
+            successModal.style.display = 'flex';
+            
+        } catch (error) {
+            document.getElementById('p-errorText').textContent = "Error de descarga en Lote: " + error.message;
+            errorMsg.style.display = 'flex';
+        } finally {
+            btnMp4.disabled = false;
+            btnMp3.disabled = false;
+            txtMp4.innerText = originalTextMp4;
+            txtMp3.innerText = originalTextMp3;
+        }
+    }
+</script>
+</body></html>
