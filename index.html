@@ -308,6 +308,9 @@ A
         }
     }
 
+    // Usaremos dinámicamente el IP donde está alojado el frontend para que funcione en el celular
+    const API_URL = 'http://' + (window.location.hostname || 'localhost') + ':5000/api';
+
     // --- LOGICA DE VIDEO ÚNICO ---
     async function obtenerInfo() {
         const urlInput = document.getElementById('videoUrl').value.trim();
@@ -328,7 +331,7 @@ A
         btn.disabled = true;
 
         try {
-            const response = await fetch('http://localhost:5000/api/info', {
+            const response = await fetch(API_URL + '/info', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: urlInput })
@@ -394,20 +397,38 @@ A
         }
 
         try {
-            const response = await fetch('http://localhost:5000/api/download', {
+            const response = await fetch(API_URL + '/download', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: urlInput, format: formato, quality: qualityVal })
             });
             
-            const data = await response.json();
-            
-            if(!response.ok || data.error) {
+            if(!response.ok) {
+                const data = await response.json();
                 throw new Error(data.error || 'Error en la descarga');
             }
 
-            document.getElementById('successTitle').innerText = data.title;
-            document.getElementById('successPath').innerText = "Guardado en directorio Descargas local";
+            // Procesar el binario (Video o Audio real)
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            
+            // Extraer nombre del archivo enviado por Flask
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = document.getElementById('resTitle').textContent + (formato === 'mp3' ? '.mp3' : '.mp4');
+            if (contentDisposition && contentDisposition.includes('filename=')) {
+                filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
+            }
+            
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(downloadUrl);
+
+            document.getElementById('successTitle').innerText = "¡Descargado en tu dispositivo!";
+            document.getElementById('successPath').innerText = "El archivo se guardó en tu carpeta local.";
             successModal.style.display = 'flex';
             
         } catch (error) {
@@ -440,7 +461,7 @@ A
         btn.disabled = true;
 
         try {
-            const response = await fetch('http://localhost:5000/api/playlist/info', {
+            const response = await fetch(API_URL + '/playlist/info', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: urlInput })
@@ -491,7 +512,7 @@ A
         }
 
         try {
-            const response = await fetch('http://localhost:5000/api/playlist/download', {
+            const response = await fetch(API_URL + '/playlist/download', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: urlInput, format: formato })

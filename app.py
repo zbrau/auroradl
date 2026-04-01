@@ -1,12 +1,12 @@
 import os
 import imageio_ffmpeg
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import yt_dlp
 
 app = Flask(__name__)
-# Permitir solicitudes desde cualquier origen (CORS) para que el frontend local pueda conectarse
-CORS(app) 
+# Necesitamos exponer el header Content-Disposition para que el frontend lea el nombre del archivo
+CORS(app, expose_headers=["Content-Disposition"])
 
 # Conseguimos la ruta al binario ffmpeg privado que acabamos de instalar
 FFMPEG_EXE = imageio_ffmpeg.get_ffmpeg_exe()
@@ -57,7 +57,7 @@ def download_video():
     if not url:
         return jsonify({'error': 'No se proporcionó URL'}), 400
 
-    # Creamos la carpeta de Descargas donde guardaremos los archivos en el PC del usuario
+    # Creamos la carpeta de Descargas (actuará como carpeta temporal antes de enviar al celular)
     download_folder = os.path.join(os.getcwd(), 'Descargas')
     os.makedirs(download_folder, exist_ok=True)
     
@@ -91,11 +91,20 @@ def download_video():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             # Ahora SÍ descargamos físicamente y lo guardamos
             info = ydl.extract_info(url, download=True)
-            return jsonify({
-                'success': True,
-                'path': download_folder,
-                'title': info.get('title')
-            })
+            
+            # Ubicar el archivo exacto que se acaba de descargar
+            downloaded_file = ydl.prepare_filename(info)
+            if 'requested_downloads' in info and len(info['requested_downloads']) > 0:
+                downloaded_file = info['requested_downloads'][0]['filepath']
+            else:
+                if fmt == 'mp3':
+                    downloaded_file = os.path.splitext(downloaded_file)[0] + '.mp3'
+                elif os.path.exists(os.path.splitext(downloaded_file)[0] + '.mp4'):
+                    downloaded_file = os.path.splitext(downloaded_file)[0] + '.mp4'
+            
+            # Enviar el archivo como descarga hacia el navegador (celular o PC)
+            return send_file(downloaded_file, as_attachment=True)
+            
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -165,5 +174,5 @@ def download_playlist():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    # El servidor correrá en el puerto 5000 (http://localhost:5000)
-    app.run(debug=True, port=5000)
+    # El servidor correrá en todas las interfaces (0.0.0.0) para permitir acceso LAN
+    app.run(host='0.0.0.0', debug=True, port=5000)
