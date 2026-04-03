@@ -276,6 +276,35 @@
 
     <!-- Main Content -->
     <main class="flex-grow pt-32 pb-20 px-6 md:pl-80 max-w-7xl mx-auto w-full">
+    <!-- Cookie Status Banner -->
+    <div id="cookieBanner" class="hidden mb-6">
+        <!-- OK state -->
+        <div id="cookieOk" class="hidden flex items-center gap-3 px-5 py-3 bg-green-500/10 border border-green-500/30 rounded-xl text-sm">
+            <span class="material-symbols-outlined text-green-400">verified</span>
+            <span class="text-green-300 font-medium">Cookies cargadas — YouTube listo.</span>
+            <button onclick="document.getElementById('cookieBanner').classList.add('hidden')" class="ml-auto text-green-400 hover:text-white">
+                <span class="material-symbols-outlined text-sm">close</span>
+            </button>
+        </div>
+        <!-- Warning state -->
+        <div id="cookieWarn" class="hidden flex-col gap-2 px-5 py-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-sm">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-amber-400">warning</span>
+                <span class="text-amber-300 font-semibold">Sin cookies — YouTube puede rechazar descargas</span>
+                <button onclick="document.getElementById('cookieBanner').classList.add('hidden')" class="ml-auto text-amber-400 hover:text-white">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+            </div>
+            <ol class="text-amber-200/80 ml-8 space-y-1 list-decimal text-xs">
+                <li>Instala la extensión <strong>"Get cookies.txt LOCALLY"</strong> en Chrome/Edge.</li>
+                <li>Inicia sesión en <strong>youtube.com</strong>.</li>
+                <li>Haz clic en la extensión y exporta las cookies como <code class="bg-black/30 px-1 rounded">cookies.txt</code>.</li>
+                <li>Copia el archivo a <code class="bg-black/30 px-1 rounded">backend/cookies.txt</code> junto a <code class="bg-black/30 px-1 rounded">app.py</code>.</li>
+                <li>Reinicia el servidor Flask.</li>
+            </ol>
+        </div>
+    </div>
+
         <section class="mb-12">
             <h1 class="font-headline text-5xl md:text-6xl font-extrabold tracking-tight mb-4 max-w-2xl" data-i18n="hero.title">
                 Descarga la <span class="text-primary italic">esencia</span> de internet.
@@ -808,12 +837,38 @@
         }
 
         // ================== CONFIG ==================
-        const BACKEND_URL = 'https://aurora-dl-backend.onrender.com';
+        // Use relative URLs (empty string) so API calls always go to the server
+        // that is serving this page — works for localhost, LAN IPs, and Render.
+        const BACKEND_URL = '';
+        // Legacy: only use explicit Render URL when NOT served by any HTTP server
+        // (i.e., opened as a local file). Detect by checking protocol.
+        const _renderUrl = 'https://aurora-dl-backend.onrender.com';
         const API_URL = BACKEND_URL + '/api';
+
+        // ================== COOKIE STATUS ==================
+        async function checkCookieStatus() {
+            try {
+                const res = await fetch(API_URL + '/cookies/status');
+                if (!res.ok) return;
+                const data = await res.json();
+                const banner = document.getElementById('cookieBanner');
+                const cookieOk = document.getElementById('cookieOk');
+                const cookieWarn = document.getElementById('cookieWarn');
+                if (!banner) return;
+                banner.classList.remove('hidden');
+                if (data.has_cookies) {
+                    cookieOk.classList.remove('hidden');
+                    cookieWarn.classList.add('hidden');
+                } else {
+                    cookieOk.classList.add('hidden');
+                    cookieWarn.classList.remove('hidden');
+                }
+            } catch(e) { /* backend offline, ignore */ }
+        }
         const cache = new Map();
 
         // ================== WEBSOCKET ==================
-        const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'] });
+        const socket = io(window.location.origin, { transports: ['websocket', 'polling'] });
         let activeDownloads = {};
 
         socket.on('connect', () => console.log('WebSocket conectado'));
@@ -1607,6 +1662,9 @@
 
             document.getElementById('videoUrl').addEventListener('keypress', (e) => { if (e.key === 'Enter') obtenerInfo(); });
             document.getElementById('playlistUrl').addEventListener('keypress', (e) => { if (e.key === 'Enter') obtenerPlaylistInfo(); });
+
+            // Check cookie status for YouTube authentication
+            checkCookieStatus();
 
             // Registrar Service Worker para PWA
             if ('serviceWorker' in navigator) {
