@@ -807,6 +807,11 @@
             }
         }
 
+        // ================== CONFIG ==================
+        const BACKEND_URL = 'https://aurora-dl-backend.onrender.com';
+        const API_URL = BACKEND_URL + '/api';
+        const cache = new Map();
+
         // ================== WEBSOCKET ==================
         const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'] });
         let activeDownloads = {};
@@ -847,11 +852,6 @@
                 sendNotif('Cola: Error', data.error || 'Error en descarga');
             }
         });
-
-        // ================== CONFIG ==================
-        // Cambia esta URL a la de tu backend en Render
-        const BACKEND_URL = 'https://aurora-dl-backend.onrender.com';
-        const API_URL = BACKEND_URL + '/api';
 
         function validarUrl(url) {
             const patterns = [

@@ -3,7 +3,7 @@ import time
 import threading
 import json
 import hashlib
-import imageio_ffmpeg
+import subprocess
 from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'frontend'), static_url_path='')
 CORS(app, expose_headers=["Content-Disposition"])
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+socketio = SocketIO(app, async_mode="threading", cors_allowed_origins="*")
 
 # Rate limiting
 limiter = Limiter(
@@ -25,7 +25,12 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
-FFMPEG_EXE = imageio_ffmpeg.get_ffmpeg_exe()
+# FFMPEG: en Render ya viene instalado, en local usamos imageio_ffmpeg
+try:
+    import imageio_ffmpeg
+    FFMPEG_EXE = imageio_ffmpeg.get_ffmpeg_exe()
+except ImportError:
+    FFMPEG_EXE = 'ffmpeg'
 
 # ================== CACHE DE METADATOS ==================
 class MetadataCache:
