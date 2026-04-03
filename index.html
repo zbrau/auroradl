@@ -1,11 +1,17 @@
 <!DOCTYPE html>
-<html class="dark" lang="es"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Aurora DL | Premium Video Management</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<style>
+<html lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Aurora DL | Premium Video Management</title>
+    <link href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌌</text></svg>" rel="icon"/>
+    <meta name="theme-color" content="#0d0d17"/>
+    <meta name="description" content="Descarga videos, audios y playlists de internet en la mejor calidad"/>
+    <link href="/manifest.json" rel="manifest"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
@@ -17,70 +23,166 @@
             opacity: 0.15;
             z-index: -1;
         }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes progress-stripes {
+            from { background-position: 1rem 0; }
+            to { background-position: 0 0; }
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .animate-slideUp { animation: slideUp 0.4s ease-out forwards; }
+        .progress-bar {
+            background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
+            background-size: 1rem 1rem;
+            animation: progress-stripes 1s linear infinite;
+        }
+        .shimmer {
+            background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.08) 50%, transparent 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        .history-scroll::-webkit-scrollbar { width: 6px; }
+        .history-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 3px; }
+        .history-scroll::-webkit-scrollbar-thumb { background: rgba(235,135,255,0.3); border-radius: 3px; }
+        .light {
+            --bg-surface: #f8f5ff;
+            --bg-surface-high: #ffffff;
+            --bg-surface-container: #f0ebff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a4a6a;
+            --text-muted: #7a7a9a;
+            --border-color: rgba(0,0,0,0.1);
+            --glow-opacity: 0.08;
+        }
+        .light body { background: var(--bg-surface) !important; color: var(--text-primary) !important; }
+        .light .bg-surface { background: var(--bg-surface) !important; }
+        .light .bg-surface-container-high\/40, .light .bg-surface-container-high\/60 { background: rgba(255,255,255,0.8) !important; }
+        .light .bg-\[\#0d0d17\]\/80 { background: rgba(248,245,255,0.9) !important; }
+        .light .bg-surface-container-lowest { background: #ffffff !important; }
+        .light .bg-surface-container-low\/30 { background: rgba(240,235,255,0.5) !important; }
+        .light .text-white { color: var(--text-primary) !important; }
+        .light .text-on-surface { color: var(--text-primary) !important; }
+        .light .text-on-surface-variant { color: var(--text-secondary) !important; }
+        .light .text-slate-400 { color: var(--text-muted) !important; }
+        .light .border-white\/10 { border-color: var(--border-color) !important; }
+        .light .border-white\/5 { border-color: rgba(0,0,0,0.05) !important; }
+        .light .aurora-glow { opacity: var(--glow-opacity) !important; }
+        .light header { background: rgba(255,255,255,0.8) !important; }
+        .light .dark\:bg-slate-950\/40 { background: rgba(248,245,255,0.9) !important; }
+        .light .text-violet-400 { color: #8b5cf6 !important; }
+        .light input { color: var(--text-primary) !important; }
+        .light input::placeholder { color: var(--text-muted) !important; }
+        .theme-toggle {
+            position: relative; width: 56px; height: 28px; border-radius: 14px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d4a 100%);
+            cursor: pointer; transition: all 0.3s ease;
+        }
+        .light .theme-toggle { background: linear-gradient(135deg, #ffd700 0%, #ffb700 100%); }
+        .theme-toggle-thumb {
+            position: absolute; top: 2px; left: 2px; width: 24px; height: 24px;
+            border-radius: 50%; background: #fff; display: flex; align-items: center;
+            justify-content: center; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .light .theme-toggle-thumb { left: 30px; background: #fff; }
+        .lang-selector { position: relative; }
+        .lang-btn {
+            display: flex; align-items: center; gap: 4px; padding: 6px 10px;
+            border-radius: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer; transition: all 0.2s; font-size: 12px; font-weight: 600;
+        }
+        .light .lang-btn { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); }
+        .lang-btn:hover { background: rgba(255,255,255,0.2); }
+        .light .lang-btn:hover { background: rgba(0,0,0,0.1); }
+        .lang-dropdown {
+            position: absolute; top: 100%; right: 0; margin-top: 8px;
+            background: rgba(30,30,44,0.95); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+            overflow: hidden; opacity: 0; visibility: hidden; transform: translateY(-10px);
+            transition: all 0.2s ease; z-index: 100;
+        }
+        .light .lang-dropdown { background: rgba(255,255,255,0.95); border-color: rgba(0,0,0,0.1); }
+        .lang-selector.open .lang-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+        .lang-option {
+            display: flex; align-items: center; gap: 8px; padding: 10px 16px;
+            cursor: pointer; transition: background 0.2s; white-space: nowrap;
+        }
+        .lang-option:hover { background: rgba(235,135,255,0.2); }
+        .lang-option.active { background: rgba(235,135,255,0.3); color: #eb87ff; }
+        .lang-flag { font-size: 16px; }
+        .drop-zone-active {
+            border-color: #eb87ff !important;
+            background: rgba(235,135,255,0.1) !important;
+        }
+        .drop-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            background: rgba(13,13,23,0.9); backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: all 0.3s;
+        }
+        .drop-overlay.visible { opacity: 1; visibility: visible; }
+        .queue-item { transition: all 0.3s ease; }
+        .queue-item:hover { transform: translateX(4px); }
+        .stat-card { transition: all 0.2s ease; }
+        .stat-card:hover { transform: translateY(-2px); }
+        .subtitle-chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 10px; border-radius: 9999px; font-size: 12px;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+            cursor: pointer; transition: all 0.2s;
+        }
+        .subtitle-chip:hover { background: rgba(235,135,255,0.2); border-color: rgba(235,135,255,0.4); }
+        .subtitle-chip.selected { background: rgba(235,135,255,0.3); border-color: #eb87ff; color: #eb87ff; }
+        .trim-input {
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px; padding: 8px 12px; color: white; font-family: monospace;
+            font-size: 14px; width: 100px; outline: none; transition: border-color 0.2s;
+        }
+        .trim-input:focus { border-color: #eb87ff; }
     </style>
-<script id="tailwind-config">
+    <script>
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
+                        "surface-container": "#181825", "surface-container-low": "#12121e",
+                        "surface-container-high": "#1e1e2c", "surface-container-highest": "#252433",
+                        "surface-dim": "#0d0d17", "surface-bright": "#2b2b3b",
+                        "surface-container-lowest": "#000000", "surface": "#0d0d17",
+                        "on-surface": "#e7e3f3", "on-surface-variant": "#aca9b8",
+                        "primary": "#eb87ff", "primary-container": "#e56fff",
+                        "primary-fixed": "#e56fff", "primary-fixed-dim": "#df54ff",
+                        "secondary": "#00cffc", "secondary-container": "#00677f",
+                        "secondary-fixed": "#80deff", "secondary-fixed-dim": "#37d4ff",
+                        "tertiary": "#ff6b98", "tertiary-container": "#fc0078",
+                        "tertiary-fixed": "#ff8eac", "tertiary-fixed-dim": "#ff769e",
+                        "error": "#ff6e84", "error-container": "#a70138",
+                        "outline": "#757481", "outline-variant": "#474753",
+                        "inverse-primary": "#a000c2", "inverse-surface": "#fcf8ff",
+                        "on-primary": "#530065", "on-primary-container": "#40004f",
+                        "on-secondary": "#004050", "on-secondary-container": "#eef9ff",
+                        "on-tertiary": "#47001d", "on-tertiary-container": "#000000",
+                        "on-error": "#490013", "on-error-container": "#ffb2b9",
+                        "on-background": "#e7e3f3", "surface-variant": "#252433",
+                        "background": "#0d0d17", "surface-tint": "#eb87ff",
                         "inverse-on-surface": "#555460",
-                        "tertiary-dim": "#e4006c",
-                        "surface-container": "#181825",
-                        "on-secondary-container": "#eef9ff",
-                        "tertiary-container": "#fc0078",
-                        "surface-container-low": "#12121e",
-                        "surface-tint": "#eb87ff",
-                        "surface-container-high": "#1e1e2c",
-                        "error-container": "#a70138",
-                        "tertiary-fixed": "#ff8eac",
-                        "surface-dim": "#0d0d17",
-                        "outline-variant": "#474753",
-                        "inverse-primary": "#a000c2",
-                        "on-primary-fixed-variant": "#4f0061",
-                        "on-tertiary-fixed": "#380015",
-                        "surface-container-highest": "#252433",
-                        "on-surface": "#e7e3f3",
-                        "outline": "#757481",
-                        "on-tertiary-fixed-variant": "#760035",
-                        "on-secondary-fixed-variant": "#00586d",
-                        "on-primary": "#530065",
-                        "on-tertiary": "#47001d",
-                        "on-primary-container": "#40004f",
-                        "on-tertiary-container": "#000000",
-                        "primary-dim": "#c207ea",
-                        "error-dim": "#d73357",
-                        "on-error-container": "#ffb2b9",
-                        "on-secondary": "#004050",
-                        "surface-container-lowest": "#000000",
-                        "surface-bright": "#2b2b3b",
-                        "primary-container": "#e56fff",
-                        "primary": "#eb87ff",
-                        "secondary-fixed": "#80deff",
-                        "on-error": "#490013",
-                        "error": "#ff6e84",
-                        "secondary-container": "#00677f",
-                        "on-primary-fixed": "#000000",
-                        "surface": "#0d0d17",
-                        "secondary": "#00cffc",
-                        "tertiary-fixed-dim": "#ff769e",
-                        "surface-variant": "#252433",
-                        "on-background": "#e7e3f3",
-                        "on-surface-variant": "#aca9b8",
-                        "tertiary": "#ff6b98",
-                        "primary-fixed-dim": "#df54ff",
-                        "secondary-fixed-dim": "#37d4ff",
-                        "primary-fixed": "#e56fff",
-                        "inverse-surface": "#fcf8ff",
-                        "secondary-dim": "#00c0ea",
-                        "on-secondary-fixed": "#003a48",
-                        "background": "#0d0d17"
+                        "on-primary-fixed": "#000000", "on-primary-fixed-variant": "#4f0061",
+                        "on-secondary-fixed": "#003a48", "on-secondary-fixed-variant": "#00586d",
+                        "on-tertiary-fixed": "#380015", "on-tertiary-fixed-variant": "#760035",
+                        "primary-dim": "#c200ea", "secondary-dim": "#00c0ea",
+                        "tertiary-dim": "#e4006c", "error-dim": "#d73357",
                     },
-                    fontFamily: {
-                        "headline": ["Plus Jakarta Sans"],
-                        "body": ["Inter"],
-                        "label": ["Inter"]
-                    },
+                    fontFamily: { "headline": ["Plus Jakarta Sans"], "body": ["Inter"], "label": ["Inter"] },
                     borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
                 },
             },
@@ -88,455 +190,1428 @@
     </script>
 </head>
 <body class="bg-surface text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen flex flex-col overflow-x-hidden">
-<!-- Background Atmospheric Elements -->
-<div class="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary aurora-glow"></div>
-<div class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-secondary aurora-glow"></div>
-<!-- TopAppBar -->
-<header class="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-8 py-3 max-w-6xl mx-auto rounded-full mt-4 mx-4 bg-white/5 dark:bg-slate-950/40 backdrop-blur-xl border border-white/10 dark:border-white/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
-<div class="flex items-center gap-2">
-<span class="text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-[#eb87ff] to-[#00cffc]">Aurora DL</span>
-</div>
-<nav class="hidden md:flex items-center gap-8">
-<a id="navInicio" class="text-violet-400 font-bold border-b-2 border-[#00cffc] pb-1 cursor-pointer" onclick="switchView('inicio')">Inicio</a>
-<a id="navPlaylists" class="text-slate-400 hover:text-white transition-colors cursor-pointer" onclick="switchView('playlists')">Playlists</a>
-</nav>
-<div class="flex items-center gap-4">
-<button class="p-2 rounded-full hover:bg-white/10 transition-all text-on-surface-variant">
-<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
-</button>
-</div>
-</header>
-<!-- SideNavBar (Mobile Trigger Hidden for now) -->
-<aside class="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 z-40 flex-col p-6 bg-[#0d0d17]/80 backdrop-blur-2xl rounded-r-3xl h-[calc(100vh-2rem)] my-4 shadow-2xl">
-<div class="flex flex-col gap-1 mb-8 pt-20">
-<div class="flex items-center gap-3 px-4 py-2">
-<div class="w-10 h-10 rounded-xl overflow-hidden border border-primary/20 bg-primary/20 flex flex-col items-center justify-center font-bold">
-A
-</div>
-<div>
-<p class="font-headline font-bold text-sm text-white">Usuario</p>
-<p class="text-xs text-secondary">Descargador Pro</p>
-</div>
-</div>
-</div>
-<nav class="flex flex-col gap-2 flex-grow">
-<button class="flex items-center gap-4 px-4 py-3 rounded-xl bg-gradient-to-r from-[#eb87ff]/20 to-transparent border-l-4 border-[#eb87ff] text-white">
-<span class="material-symbols-outlined" data-icon="download">download</span>
-<span class="font-medium text-sm">Descargas</span>
-</button>
-</nav>
-</aside>
-<!-- Main Content Canvas -->
-<main class="flex-grow pt-32 pb-20 px-6 md:pl-80 max-w-7xl mx-auto w-full">
-<!-- Hero Section -->
-<section class="mb-12">
-<h1 class="font-headline text-5xl md:text-6xl font-extrabold tracking-tight mb-4 max-w-2xl">
+    <div class="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary aurora-glow"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-secondary aurora-glow"></div>
+
+    <!-- Drop Overlay -->
+    <div id="dropOverlay" class="drop-overlay">
+        <div class="text-center animate-slideUp">
+            <span class="material-symbols-outlined text-8xl text-primary mb-4">cloud_upload</span>
+            <h2 class="text-3xl font-headline font-bold text-white mb-2" data-i18n="drop.title">Suelta la URL aquí</h2>
+            <p class="text-on-surface-variant" data-i18n="drop.subtitle">Se procesará automáticamente</p>
+        </div>
+    </div>
+
+    <!-- TopAppBar -->
+    <header class="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-8 py-3 max-w-6xl mx-auto rounded-full mt-4 mx-4 bg-white/5 dark:bg-slate-950/40 backdrop-blur-xl border border-white/10 dark:border-white/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-[#eb87ff] to-[#00cffc]">Aurora DL</span>
+        </div>
+        <nav class="hidden md:flex items-center gap-6">
+            <a id="navInicio" class="text-violet-400 font-bold border-b-2 border-[#00cffc] pb-1 cursor-pointer transition-all" onclick="switchView('inicio')" data-i18n="nav.inicio">Inicio</a>
+            <a id="navPlaylists" class="text-slate-400 hover:text-white transition-colors cursor-pointer" onclick="switchView('playlists')" data-i18n="nav.playlists">Playlists</a>
+            <a id="navCola" class="text-slate-400 hover:text-white transition-colors cursor-pointer" onclick="switchView('cola')" data-i18n="nav.cola">Cola</a>
+            <a id="navEstadisticas" class="text-slate-400 hover:text-white transition-colors cursor-pointer" onclick="switchView('estadisticas')" data-i18n="nav.estadisticas">Stats</a>
+            <a id="navHistorial" class="text-slate-400 hover:text-white transition-colors cursor-pointer" onclick="switchView('historial')" data-i18n="nav.historial">Historial</a>
+        </nav>
+        <div class="flex items-center gap-3">
+            <div class="lang-selector" id="langSelector">
+                <button class="lang-btn" onclick="toggleLangDropdown()">
+                    <span id="currentLangFlag">🇪🇸</span>
+                    <span id="currentLangCode">ES</span>
+                    <span class="material-symbols-outlined text-sm">expand_more</span>
+                </button>
+                <div class="lang-dropdown">
+                    <div class="lang-option active" onclick="setLanguage('es')" data-lang="es"><span class="lang-flag">🇪🇸</span><span>Español</span></div>
+                    <div class="lang-option" onclick="setLanguage('en')" data-lang="en"><span class="lang-flag">🇺🇸</span><span>English</span></div>
+                    <div class="lang-option" onclick="setLanguage('pt')" data-lang="pt"><span class="lang-flag">🇧🇷</span><span>Português</span></div>
+                </div>
+            </div>
+            <button onclick="toggleTheme()" class="theme-toggle" title="Cambiar tema">
+                <div class="theme-toggle-thumb">
+                    <span class="material-symbols-outlined text-amber-500 text-sm" id="themeIconDark">dark_mode</span>
+                    <span class="material-symbols-outlined text-amber-500 text-sm hidden" id="themeIconLight">light_mode</span>
+                </div>
+            </button>
+            <button id="btnNotif" onclick="requestNotifPermission()" class="p-2 rounded-full hover:bg-white/10 transition-all text-on-surface-variant" title="Notificaciones">
+                <span class="material-symbols-outlined">notifications</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- SideNavBar -->
+    <aside class="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 z-40 flex-col p-6 bg-[#0d0d17]/80 backdrop-blur-2xl rounded-r-3xl h-[calc(100vh-2rem)] my-4 shadow-2xl">
+        <div class="flex flex-col gap-1 mb-8 pt-20">
+            <div class="flex items-center gap-3 px-4 py-2">
+                <div class="w-10 h-10 rounded-xl overflow-hidden border border-primary/20 bg-primary/20 flex items-center justify-center font-bold">A</div>
+                <div>
+                    <p class="font-headline font-bold text-sm text-white" data-i18n="sidebar.usuario">Usuario</p>
+                    <p class="text-xs text-secondary" data-i18n="sidebar.pro">Descargador Pro</p>
+                </div>
+            </div>
+        </div>
+        <nav class="flex flex-col gap-2 flex-grow">
+            <button onclick="switchView('inicio')" class="flex items-center gap-4 px-4 py-3 rounded-xl bg-gradient-to-r from-[#eb87ff]/20 to-transparent border-l-4 border-[#eb87ff] text-white">
+                <span class="material-symbols-outlined">download</span>
+                <span class="font-medium text-sm" data-i18n="sidebar.descargas">Descargas</span>
+            </button>
+            <button onclick="switchView('cola')" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 border-l-4 border-transparent text-on-surface-variant transition-all">
+                <span class="material-symbols-outlined">queue</span>
+                <span class="font-medium text-sm" data-i18n="sidebar.cola">Cola</span>
+                <span id="sidebarQueueCount" class="ml-auto bg-primary/20 text-primary text-xs font-bold px-2 py-0.5 rounded-full hidden">0</span>
+            </button>
+        </nav>
+        <div class="mt-auto pt-4 border-t border-white/10">
+            <p class="text-xs text-on-surface-variant mb-2" data-i18n="sidebar.sesion">Sesión actual</p>
+            <div class="flex justify-between text-xs mb-1">
+                <span class="text-slate-400" data-i18n="sidebar.descargasCount">Descargas:</span>
+                <span id="statDownloads" class="text-primary font-bold">0</span>
+            </div>
+            <div class="flex justify-between text-xs">
+                <span class="text-slate-400">Plataforma:</span>
+                <span id="statPlatform" class="text-secondary font-bold">-</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-32 pb-20 px-6 md:pl-80 max-w-7xl mx-auto w-full">
+        <section class="mb-12">
+            <h1 class="font-headline text-5xl md:text-6xl font-extrabold tracking-tight mb-4 max-w-2xl" data-i18n="hero.title">
                 Descarga la <span class="text-primary italic">esencia</span> de internet.
             </h1>
-<p class="text-on-surface-variant text-lg max-w-xl">
+            <p class="text-on-surface-variant text-lg max-w-xl" data-i18n="hero.subtitle">
                 Almacena tus videos, audios y playlists favoritas en la mejor calidad posible de forma instantánea, privada y elegante.
             </p>
-</section>
-<!-- ================== VISTA INICIO (VIDEO ÚNICO) ================== -->
-<div id="view-inicio" class="space-y-8">
-<!-- Input Glass Card -->
-<div class="relative group" id="input-container">
-<div class="absolute -inset-0.5 bg-gradient-to-r from-primary to-secondary rounded-2xl blur opacity-20 group-focus-within:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-<div class="relative bg-surface-container-high/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row gap-4 items-center">
-<div class="relative flex-grow w-full">
-<span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline" data-icon="link">link</span>
-<input id="videoUrl" class="w-full bg-surface-container-lowest border-0 rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-secondary/50 transition-all outline-none" placeholder="Pega aquí el enlace de YouTube..." type="text"/>
-</div>
-<button id="btnProcesar" onclick="obtenerInfo()" class="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-primary to-secondary text-surface-container-lowest font-black rounded-xl hover:shadow-[0_0_20px_rgba(0,207,252,0.4)] active:scale-95 transition-all flex items-center justify-center gap-2">
-                        Procesar
+        </section>
+
+        <!-- ================== VISTA INICIO ================== -->
+        <div id="view-inicio" class="space-y-8">
+            <div class="relative group" id="input-container">
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-primary to-secondary rounded-2xl blur opacity-20 group-focus-within:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                <div class="relative bg-surface-container-high/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row gap-4 items-center">
+                    <div class="relative flex-grow w-full">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline">link</span>
+                        <input id="videoUrl" class="w-full bg-surface-container-lowest border-0 rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-secondary/50 transition-all outline-none" placeholder="Pega aquí el enlace de YouTube, TikTok, Instagram..." type="text"/>
+                    </div>
+                    <button id="btnProcesar" onclick="obtenerInfo()" class="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-primary to-secondary text-surface-container-lowest font-black rounded-xl hover:shadow-[0_0_20px_rgba(0,207,252,0.4)] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span data-i18n="input.btnProcesar">Procesar</span>
                         <span class="material-symbols-outlined text-lg">bolt</span>
-</button>
-</div>
-<!-- Error State  -->
-<div id="errorMsg" class="hidden mt-4 flex items-center gap-3 p-4 bg-error-container/40 backdrop-blur-md border border-error/20 rounded-xl text-error">
-<span class="material-symbols-outlined">error</span>
-<p id="errorText" class="text-sm font-medium">No se pudo procesar el enlace. Por favor, verifica la URL e intenta de nuevo.</p>
-</div>
-</div>
-<!-- Loading State -->
-<div class="hidden py-12 flex flex-col items-center justify-center gap-6" id="loader">
-<div class="relative w-20 h-20">
-<div class="absolute inset-0 rounded-full border-4 border-primary/20"></div>
-<div class="absolute inset-0 rounded-full border-4 border-t-secondary animate-spin"></div>
-<div class="absolute inset-4 rounded-full bg-primary/10 blur-xl animate-pulse"></div>
-</div>
-<p class="text-on-surface-variant font-medium animate-pulse" id="loaderText">Analizando flujos de datos...</p>
-</div>
-<!-- Result State -->
-<div class="hidden grid-cols-1 md:grid-cols-3 gap-6" id="resultCard" style="display: none;">
-<!-- Main Result Card -->
-<div class="md:col-span-2 bg-surface-container-high/40 backdrop-blur-xl border border-white/5 rounded-2xl overflow-hidden flex flex-col">
-<div class="relative aspect-video w-full overflow-hidden">
-<img id="resThumb" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src=""/>
-<div class="absolute top-4 right-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-xs font-bold flex items-center gap-1">
-<span class="material-symbols-outlined text-xs">schedule</span>
-<span id="resDuration">00:00</span>
-</div>
-<div class="absolute inset-0 bg-gradient-to-t from-surface-container-high via-transparent to-transparent"></div>
-</div>
-<div class="p-6 flex flex-col gap-4">
-<h3 id="resTitle" class="font-headline text-2xl font-bold text-white leading-tight">Video Title</h3>
+                    </button>
+                </div>
+                <div id="errorMsg" class="hidden mt-4 flex items-center gap-3 p-4 bg-error-container/40 backdrop-blur-md border border-error/20 rounded-xl text-error animate-slideUp">
+                    <span class="material-symbols-outlined">error</span>
+                    <p id="errorText" class="text-sm font-medium"></p>
+                </div>
+            </div>
 
-<div class="flex items-center gap-3 mb-2">
-    <span class="text-on-surface-variant text-sm font-bold uppercase tracking-widest">Calidad de Video:</span>
-    <select id="videoQuality" class="bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-white outline-none focus:ring-1 focus:ring-primary/50 transition-all text-sm font-bold">
-        <option value="">Óptima (Automático)</option>
-    </select>
-</div>
+            <div class="hidden py-12 flex-col items-center justify-center gap-6" id="loader">
+                <div class="relative w-20 h-20">
+                    <div class="absolute inset-0 rounded-full border-4 border-primary/20"></div>
+                    <div class="absolute inset-0 rounded-full border-4 border-t-secondary animate-spin"></div>
+                    <div class="absolute inset-4 rounded-full bg-primary/10 blur-xl animate-pulse"></div>
+                </div>
+                <p class="text-on-surface-variant font-medium animate-pulse" id="loaderText">Analizando flujos de datos...</p>
+            </div>
 
-<div class="flex flex-wrap gap-4">
-<button id="btnMp3" onclick="descargarArchivo('mp3')" class="flex-grow flex items-center justify-center gap-3 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all group">
-<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">music_note</span>
-<span id="txtBtnMp3" class="font-semibold">🎵 Descargar MP3 (Audio)</span>
-</button>
-<button id="btnMp4" onclick="descargarArchivo('mp4')" class="flex-grow flex items-center justify-center gap-3 py-4 bg-primary text-on-primary-container rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20">
-<span class="material-symbols-outlined group-hover:scale-110 transition-transform">movie</span>
-<span id="txtBtnMp4" class="font-semibold text-black">🎬 Descargar MP4 (Video)</span>
-</button>
-</div>
-</div>
-</div>
-<!-- Secondary Metadata -->
-<div class="flex flex-col gap-6">
-<div class="p-6 bg-secondary/10 backdrop-blur-xl border border-secondary/20 rounded-2xl">
-<div class="flex items-center gap-3 mb-2">
-<span class="material-symbols-outlined text-secondary">verified</span>
-<h4 class="text-sm font-bold text-white uppercase tracking-widest">Privacidad Total</h4>
-</div>
-<p class="text-xs text-on-surface-variant leading-relaxed">
-                            Todos los archivos son descargados y gestionados localmente para garantizar una privacidad del 100%.
-                        </p>
-</div>
-</div>
-</div>
-</div> <!-- FIN VISTA INICIO -->
+            <div class="hidden grid-cols-1 md:grid-cols-3 gap-6 animate-slideUp" id="resultCard">
+                <div class="md:col-span-2 bg-surface-container-high/40 backdrop-blur-xl border border-white/5 rounded-2xl overflow-hidden flex flex-col">
+                    <div class="relative aspect-video w-full overflow-hidden bg-black">
+                        <iframe id="videoPreview" class="w-full h-full hidden" frameborder="0" allowfullscreen></iframe>
+                        <img id="resThumb" class="w-full h-full object-cover" src=""/>
+                        <button id="btnPreview" onclick="togglePreview()" class="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-all group opacity-0 hover:opacity-100">
+                            <span class="material-symbols-outlined text-6xl text-white/80 group-hover:scale-110 transition-transform">play_circle</span>
+                        </button>
+                        <div class="absolute top-4 right-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-xs font-bold flex items-center gap-1">
+                            <span class="material-symbols-outlined text-xs">schedule</span>
+                            <span id="resDuration">00:00</span>
+                        </div>
+                        <div id="resPlatform" class="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-xs font-bold flex items-center gap-1 hidden">
+                            <span class="material-symbols-outlined text-xs">public</span>
+                            <span id="resPlatformName"></span>
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-surface-container-high via-transparent to-transparent"></div>
+                    </div>
+                    <div class="p-6 flex flex-col gap-4">
+                        <h3 id="resTitle" class="font-headline text-2xl font-bold text-white leading-tight"></h3>
+                        <div id="resMeta" class="flex flex-wrap gap-3 text-xs text-on-surface-variant hidden">
+                            <span id="resUploader" class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">person</span><span></span></span>
+                            <span id="resViews" class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">visibility</span><span></span></span>
+                        </div>
 
-<!-- ================== VISTA PLAYLISTS ================== -->
-<div id="view-playlists" class="space-y-8 hidden">
-<div class="relative group" id="p-input-container">
-<div class="absolute -inset-0.5 bg-gradient-to-r from-[#8957e5] to-[#fc0078] rounded-2xl blur opacity-20 group-focus-within:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-<div class="relative bg-surface-container-high/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row gap-4 items-center">
-<div class="relative flex-grow w-full">
-<span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline" data-icon="playlist_add">playlist_add</span>
-<input id="playlistUrl" class="w-full bg-surface-container-lowest border-0 rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-[#fc0078]/50 transition-all outline-none" placeholder="Pega el enlace de la Playlist aquí..." type="text"/>
-</div>
-<button id="btnPProcesar" onclick="obtenerPlaylistInfo()" class="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-[#8957e5] to-[#fc0078] text-white font-black rounded-xl hover:shadow-[0_0_20px_rgba(252,0,120,0.4)] active:scale-95 transition-all flex items-center justify-center gap-2">
-                        Analizar Playlist
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-on-surface-variant text-sm font-bold uppercase tracking-widest" data-i18n="quality.label">Calidad:</span>
+                            <select id="videoQuality" class="bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-white outline-none focus:ring-1 focus:ring-primary/50 transition-all text-sm font-bold">
+                                <option value="">Óptima (Automática)</option>
+                            </select>
+                        </div>
+
+                        <!-- Subtítulos -->
+                        <div id="subtitlesSection" class="hidden">
+                            <span class="text-on-surface-variant text-sm font-bold uppercase tracking-widest" data-i18n="subtitles.label">Subtítulos:</span>
+                            <div id="subtitlesList" class="flex flex-wrap gap-2 mt-2"></div>
+                        </div>
+
+                        <!-- Recortar segmento -->
+                        <div id="trimSection" class="hidden">
+                            <button onclick="toggleTrimSection()" class="text-sm text-secondary flex items-center gap-1 hover:underline">
+                                <span class="material-symbols-outlined text-sm">cut</span>
+                                <span data-i18n="trim.toggle">Recortar segmento</span>
+                            </button>
+                            <div id="trimInputs" class="hidden flex items-center gap-3 mt-2">
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-xs text-on-surface-variant" data-i18n="trim.start">Inicio (seg)</label>
+                                    <input id="trimStart" type="number" min="0" value="0" class="trim-input"/>
+                                </div>
+                                <span class="text-on-surface-variant mt-4">→</span>
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-xs text-on-surface-variant" data-i18n="trim.end">Fin (seg, vacío = final)</label>
+                                    <input id="trimEnd" type="number" min="0" placeholder="" class="trim-input"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div id="progressContainer" class="hidden">
+                            <div class="flex justify-between text-xs text-on-surface-variant mb-2">
+                                <span id="progressStatus">Descargando...</span>
+                                <span id="progressPercent">0%</span>
+                            </div>
+                            <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                                <div id="progressBar" class="h-full bg-gradient-to-r from-primary to-secondary progress-bar transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                            <div id="progressDetails" class="flex gap-4 mt-1 text-xs text-on-surface-variant/60 hidden">
+                                <span id="progressSpeed"></span>
+                                <span id="progressEta"></span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-4">
+                            <button id="btnMp3" onclick="descargarArchivo('mp3')" class="flex-grow flex items-center justify-center gap-3 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all group disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">music_note</span>
+                                <span id="txtBtnMp3" class="font-semibold">🎵 Descargar MP3</span>
+                            </button>
+                            <button id="btnMp4" onclick="descargarArchivo('mp4')" class="flex-grow flex items-center justify-center gap-3 py-4 bg-primary text-on-primary-container rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span class="material-symbols-outlined group-hover:scale-110 transition-transform">movie</span>
+                                <span id="txtBtnMp4" class="font-semibold text-black">🎬 Descargar MP4</span>
+                            </button>
+                            <button id="btnAddQueue" onclick="agregarACola()" class="flex items-center justify-center gap-2 py-4 px-6 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed" title="Agregar a la cola">
+                                <span class="material-symbols-outlined text-secondary">playlist_add</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-4">
+                    <div class="p-6 bg-secondary/10 backdrop-blur-xl border border-secondary/20 rounded-2xl">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="material-symbols-outlined text-secondary">verified</span>
+                            <h4 class="text-sm font-bold text-white uppercase tracking-widest" data-i18n="cards.privacidad">Privacidad Total</h4>
+                        </div>
+                        <p class="text-xs text-on-surface-variant leading-relaxed" data-i18n="cards.privacidadDesc">Todos los archivos son gestionados localmente.</p>
+                    </div>
+                    <div class="p-6 bg-primary/10 backdrop-blur-xl border border-primary/20 rounded-2xl">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="material-symbols-outlined text-primary">tips_and_updates</span>
+                            <h4 class="text-sm font-bold text-white uppercase tracking-widest" data-i18n="cards.consejo">Consejo</h4>
+                        </div>
+                        <p class="text-xs text-on-surface-variant leading-relaxed" data-i18n="cards.consejoDesc">Arrastra URLs directamente a la página para procesarlas al instante.</p>
+                    </div>
+                    <div class="p-6 bg-tertiary/10 backdrop-blur-xl border border-tertiary/20 rounded-2xl">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="material-symbols-outlined text-tertiary">keyboard</span>
+                            <h4 class="text-sm font-bold text-white uppercase tracking-widest" data-i18n="cards.shortcuts">Atajos</h4>
+                        </div>
+                        <div class="text-xs text-on-surface-variant space-y-1">
+                            <p><kbd class="px-1.5 py-0.5 bg-white/10 rounded text-[10px]">Enter</kbd> Procesar URL</p>
+                            <p><kbd class="px-1.5 py-0.5 bg-white/10 rounded text-[10px]">Ctrl+V</kbd> Auto-detectar URL</p>
+                            <p><kbd class="px-1.5 py-0.5 bg-white/10 rounded text-[10px]">1-5</kbd> Cambiar vista</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================== VISTA PLAYLISTS ================== -->
+        <div id="view-playlists" class="space-y-8 hidden">
+            <div class="relative group">
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-[#8957e5] to-[#fc0078] rounded-2xl blur opacity-20 group-focus-within:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                <div class="relative bg-surface-container-high/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row gap-4 items-center">
+                    <div class="relative flex-grow w-full">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline">playlist_add</span>
+                        <input id="playlistUrl" class="w-full bg-surface-container-lowest border-0 rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-[#fc0078]/50 transition-all outline-none" placeholder="Pega el enlace de la Playlist aquí..." type="text"/>
+                    </div>
+                    <button id="btnPProcesar" onclick="obtenerPlaylistInfo()" class="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-[#8957e5] to-[#fc0078] text-white font-black rounded-xl hover:shadow-[0_0_20px_rgba(252,0,120,0.4)] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span data-i18n="playlist.btnAnalizar">Analizar Playlist</span>
                         <span class="material-symbols-outlined text-lg">sync</span>
-</button>
-</div>
-<div id="p-errorMsg" class="hidden mt-4 flex items-center gap-3 p-4 bg-error-container/40 backdrop-blur-md border border-error/20 rounded-xl text-error">
-<span class="material-symbols-outlined">error</span>
-<p id="p-errorText" class="text-sm font-medium">Error.</p>
-</div>
-</div>
+                    </button>
+                </div>
+                <div id="p-errorMsg" class="hidden mt-4 flex items-center gap-3 p-4 bg-error-container/40 backdrop-blur-md border border-error/20 rounded-xl text-error animate-slideUp">
+                    <span class="material-symbols-outlined">error</span>
+                    <p id="p-errorText" class="text-sm font-medium"></p>
+                </div>
+            </div>
 
-<!-- Loader Playlist -->
-<div class="hidden py-12 flex flex-col items-center justify-center gap-6" id="p-loader">
-<div class="relative w-20 h-20">
-<div class="absolute inset-0 rounded-full border-4 border-white/5"></div>
-<div class="absolute inset-0 rounded-full border-4 border-t-[#fc0078] animate-spin"></div>
-<div class="absolute inset-4 rounded-full bg-[#fc0078]/10 blur-xl animate-pulse"></div>
-</div>
-<p class="text-on-surface-variant font-medium animate-pulse" id="p-loaderText">Extrayendo datos de la lista (esto puede tardar unos segundos)...</p>
-</div>
+            <div class="hidden py-12 flex-col items-center justify-center gap-6" id="p-loader">
+                <div class="relative w-20 h-20">
+                    <div class="absolute inset-0 rounded-full border-4 border-white/5"></div>
+                    <div class="absolute inset-0 rounded-full border-4 border-t-[#fc0078] animate-spin"></div>
+                    <div class="absolute inset-4 rounded-full bg-[#fc0078]/10 blur-xl animate-pulse"></div>
+                </div>
+                <p class="text-on-surface-variant font-medium animate-pulse" id="p-loaderText">Extrayendo datos...</p>
+            </div>
 
-<!-- Result Playlist -->
-<div class="hidden grid-cols-1 gap-6" id="p-resultCard" style="display: none;">
-<div class="bg-surface-container-high/40 backdrop-blur-xl border border-white/5 rounded-2xl overflow-hidden p-8 flex flex-col gap-6 text-center">
-    <div class="w-20 h-20 mx-auto rounded-full bg-[#fc0078]/20 flex items-center justify-center mb-2">
-        <span class="material-symbols-outlined text-[#fc0078] text-4xl">queue_music</span>
-    </div>
-    <h3 id="p-resTitle" class="font-headline text-3xl font-bold text-white leading-tight">Título de la Playlist</h3>
-    <p class="text-on-surface-variant text-lg">Total de Videos encontrados: <span id="p-resCount" class="font-bold text-white">0</span></p>
-    
-    <div class="flex flex-wrap gap-4 mt-4 justify-center">
-    <button id="p-btnMp3" onclick="descargarPlaylist('mp3')" class="flex-grow max-w-xs flex items-center justify-center gap-3 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all">
-        <span class="material-symbols-outlined text-[#fc0078]">library_music</span>
-        <span id="p-txtBtnMp3" class="font-semibold text-white">🎵 Descargar toda en MP3</span>
-    </button>
-    <button id="p-btnMp4" onclick="descargarPlaylist('mp4')" class="flex-grow max-w-xs flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-[#8957e5] to-[#fc0078] text-white rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-[#fc0078]/20">
-        <span class="material-symbols-outlined">video_library</span>
-        <span id="p-txtBtnMp4" class="font-semibold">🎬 Descargar toda en MP4</span>
-    </button>
-    </div>
-</div>
-</div>
-</div> <!-- FIN VISTA PLAYLISTS -->
+            <div class="hidden grid-cols-1 gap-6 animate-slideUp" id="p-resultCard">
+                <div class="bg-surface-container-high/40 backdrop-blur-xl border border-white/5 rounded-2xl overflow-hidden p-8 flex flex-col gap-6 text-center">
+                    <div class="w-20 h-20 mx-auto rounded-full bg-[#fc0078]/20 flex items-center justify-center mb-2">
+                        <span class="material-symbols-outlined text-[#fc0078] text-4xl">queue_music</span>
+                    </div>
+                    <h3 id="p-resTitle" class="font-headline text-3xl font-bold text-white leading-tight"></h3>
+                    <p class="text-on-surface-variant text-lg"><span data-i18n="playlist.videos">Videos:</span> <span id="p-resCount" class="font-bold text-white">0</span></p>
 
-<!-- Success State (Floating Modal Simulation) -->
-<div id="successModal" class="hidden fixed bottom-12 left-1/2 -translate-x-1/2 z-[60] w-full max-w-md px-6" style="display: none;">
-<div class="bg-surface-container-highest/90 backdrop-blur-2xl border-2 border-primary/30 rounded-2xl p-5 shadow-2xl flex items-center gap-4 transition-all hover:scale-105">
-<div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-<span class="material-symbols-outlined">check_circle</span>
-</div>
-<div>
-<p id="successTitle" class="font-bold text-white">¡Descargado exitosamente!</p>
-<p id="successPath" class="text-xs text-on-surface-variant truncate">En: /Downloads/AuroraDL/NeonNights.mp4</p>
-</div>
-<button onclick="document.getElementById('successModal').style.display = 'none'" class="ml-auto text-on-surface-variant hover:text-white">
-<span class="material-symbols-outlined">close</span>
-</button>
-</div>
-</div>
-</main>
-<!-- Footer -->
-<footer class="w-full py-8 px-12 flex flex-col md:flex-row justify-between items-center gap-4 border-t border-white/5 bg-surface-container-low/30 mt-auto">
-<p class="text-xs font-medium Inter tracking-widest uppercase text-slate-500">© 2026 Aurora DL. Todos los derechos reservados.</p>
-</footer>
+                    <!-- Lista de videos de la playlist -->
+                    <div id="p-videosList" class="hidden text-left mt-4 max-h-64 overflow-y-auto history-scroll space-y-2">
+                    </div>
 
-<script>
-    // Navegación estilo SPA
-    function switchView(view) {
-        document.getElementById('view-inicio').style.display = view === 'inicio' ? 'block' : 'none';
-        document.getElementById('view-playlists').style.display = view === 'playlists' ? 'block' : 'none';
-        
-        const navInicio = document.getElementById('navInicio');
-        const navPlay = document.getElementById('navPlaylists');
-        
-        if(view === 'inicio'){
-            navInicio.className = "text-violet-400 font-bold border-b-2 border-[#00cffc] pb-1 cursor-pointer";
-            navPlay.className = "text-slate-400 hover:text-white transition-colors cursor-pointer";
-        } else {
-            navPlay.className = "text-violet-400 font-bold border-b-2 border-[#fc0078] pb-1 cursor-pointer";
-            navInicio.className = "text-slate-400 hover:text-white transition-colors cursor-pointer";
+                    <div id="p-progressContainer" class="hidden w-full max-w-md mx-auto">
+                        <div class="flex justify-between text-xs text-on-surface-variant mb-2">
+                            <span id="p-progressStatus">Procesando...</span>
+                            <span id="p-progressPercent">0%</span>
+                        </div>
+                        <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div id="p-progressBar" class="h-full bg-gradient-to-r from-[#8957e5] to-[#fc0078] progress-bar transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-4 mt-4 justify-center">
+                        <button id="p-btnMp3" onclick="descargarPlaylist('mp3')" class="flex-grow max-w-xs flex items-center justify-center gap-3 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span class="material-symbols-outlined text-[#fc0078]">library_music</span>
+                            <span id="p-txtBtnMp3" class="font-semibold text-white">🎵 Descargar toda en MP3</span>
+                        </button>
+                        <button id="p-btnMp4" onclick="descargarPlaylist('mp4')" class="flex-grow max-w-xs flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-[#8957e5] to-[#fc0078] text-white rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-[#fc0078]/20 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span class="material-symbols-outlined">video_library</span>
+                            <span id="p-txtBtnMp4" class="font-semibold">🎬 Descargar toda en MP4</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================== VISTA COLA ================== -->
+        <div id="view-cola" class="space-y-8 hidden">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="font-headline text-3xl font-bold text-white" data-i18n="cola.titulo">Cola de Descargas</h2>
+                <button onclick="limpiarCola()" class="text-xs text-on-surface-variant hover:text-error transition-colors flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">delete_sweep</span>
+                    <span data-i18n="cola.limpiar">Limpiar completadas</span>
+                </button>
+            </div>
+
+            <div id="colaVacia" class="text-center py-16">
+                <span class="material-symbols-outlined text-6xl text-on-surface-variant/30 mb-4">queue</span>
+                <p class="text-on-surface-variant" data-i18n="cola.vacio">No hay elementos en la cola</p>
+                <p class="text-xs text-on-surface-variant/60 mt-2" data-i18n="cola.vacioHint">Agrega videos desde la vista Inicio</p>
+            </div>
+
+            <div id="colaLista" class="hidden space-y-3">
+            </div>
+        </div>
+
+        <!-- ================== VISTA ESTADÍSTICAS ================== -->
+        <div id="view-estadisticas" class="space-y-8 hidden">
+            <h2 class="font-headline text-3xl font-bold text-white mb-6" data-i18n="stats.titulo">Estadísticas</h2>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="stat-card bg-surface-container-high/40 backdrop-blur border border-white/5 rounded-xl p-5">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="material-symbols-outlined text-primary">download</span>
+                        <span class="text-xs text-on-surface-variant uppercase tracking-wider" data-i18n="stats.total">Total</span>
+                    </div>
+                    <p id="statTotal" class="text-3xl font-headline font-bold text-white">0</p>
+                </div>
+                <div class="stat-card bg-surface-container-high/40 backdrop-blur border border-white/5 rounded-xl p-5">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="material-symbols-outlined text-primary">music_note</span>
+                        <span class="text-xs text-on-surface-variant uppercase tracking-wider">MP3</span>
+                    </div>
+                    <p id="statMp3" class="text-3xl font-headline font-bold text-primary">0</p>
+                </div>
+                <div class="stat-card bg-surface-container-high/40 backdrop-blur border border-white/5 rounded-xl p-5">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="material-symbols-outlined text-secondary">movie</span>
+                        <span class="text-xs text-on-surface-variant uppercase tracking-wider">MP4</span>
+                    </div>
+                    <p id="statMp4" class="text-3xl font-headline font-bold text-secondary">0</p>
+                </div>
+                <div class="stat-card bg-surface-container-high/40 backdrop-blur border border-white/5 rounded-xl p-5">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="material-symbols-outlined text-tertiary">queue_music</span>
+                        <span class="text-xs text-on-surface-variant uppercase tracking-wider" data-i18n="stats.playlists">Playlists</span>
+                    </div>
+                    <p id="statPlaylists" class="text-3xl font-headline font-bold text-tertiary">0</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-surface-container-high/40 backdrop-blur border border-white/5 rounded-xl p-6">
+                    <h3 class="font-headline font-bold text-white mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">public</span>
+                        <span data-i18n="stats.plataformas">Por Plataforma</span>
+                    </h3>
+                    <div id="statsPlatforms" class="space-y-3">
+                        <p class="text-sm text-on-surface-variant">Sin datos aún</p>
+                    </div>
+                </div>
+                <div class="bg-surface-container-high/40 backdrop-blur border border-white/5 rounded-xl p-6">
+                    <h3 class="font-headline font-bold text-white mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-secondary">calendar_today</span>
+                        <span data-i18n="stats.diario">Actividad Diaria (últimos 7 días)</span>
+                    </h3>
+                    <div id="statsDaily" class="space-y-2">
+                        <p class="text-sm text-on-surface-variant">Sin datos aún</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="stat-card bg-surface-container-high/40 backdrop-blur border border-white/5 rounded-xl p-5">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="material-symbols-outlined text-tertiary">cut</span>
+                        <span class="text-xs text-on-surface-variant uppercase tracking-wider" data-i18n="stats.recortados">Recortados</span>
+                    </div>
+                    <p id="statTrimmed" class="text-2xl font-headline font-bold text-tertiary">0</p>
+                </div>
+                <div class="stat-card bg-surface-container-high/40 backdrop-blur border border-white/5 rounded-xl p-5">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="material-symbols-outlined text-secondary">subtitles</span>
+                        <span class="text-xs text-on-surface-variant uppercase tracking-wider" data-i18n="stats.subtitulados">Con subtítulos</span>
+                    </div>
+                    <p id="statSubtitled" class="text-2xl font-headline font-bold text-secondary">0</p>
+                </div>
+                <div class="stat-card bg-surface-container-high/40 backdrop-blur border border-white/5 rounded-xl p-5">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="material-symbols-outlined text-primary">schedule</span>
+                        <span class="text-xs text-on-surface-variant uppercase tracking-wider" data-i18n="stats.desde">Desde</span>
+                    </div>
+                    <p id="statSince" class="text-lg font-headline font-bold text-primary">-</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================== VISTA HISTORIAL ================== -->
+        <div id="view-historial" class="space-y-8 hidden">
+            <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
+                <h2 class="font-headline text-3xl font-bold text-white" data-i18n="historial.titulo">Historial</h2>
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant text-sm">search</span>
+                        <input id="historialSearch" oninput="filtrarHistorial()" class="bg-white/5 border border-white/10 rounded-lg py-2 pl-9 pr-4 text-sm text-on-surface placeholder:text-on-surface-variant/50 outline-none focus:ring-1 focus:ring-primary/50 transition-all" placeholder="Buscar..." data-i18n-placeholder="historial.buscar"/>
+                    </div>
+                    <select id="historialFilter" onchange="filtrarHistorial()" class="bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-sm text-on-surface outline-none focus:ring-1 focus:ring-primary/50 transition-all">
+                        <option value="all" data-i18n="historial.filtro.todos">Todos</option>
+                        <option value="video" data-i18n="historial.filtro.videos">Videos</option>
+                        <option value="playlist" data-i18n="historial.filtro.playlists">Playlists</option>
+                        <option value="mp3" data-i18n="historial.filtro.mp3">MP3</option>
+                    </select>
+                    <button onclick="limpiarHistorial()" class="text-xs text-on-surface-variant hover:text-error transition-colors flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">delete</span>
+                        <span data-i18n="historial.limpiar">Limpiar</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="historialVacio" class="text-center py-16">
+                <span class="material-symbols-outlined text-6xl text-on-surface-variant/30 mb-4">history</span>
+                <p class="text-on-surface-variant" data-i18n="historial.vacio">Aún no tienes descargas</p>
+            </div>
+
+            <div id="historialLista" class="hidden grid-cols-1 md:grid-cols-2 gap-4 history-scroll max-h-[60vh] overflow-y-auto pr-2 space-y-4">
+            </div>
+        </div>
+
+        <!-- Success Modal -->
+        <div id="successModal" class="hidden fixed bottom-12 left-1/2 -translate-x-1/2 z-[60] w-full max-w-md px-6 animate-slideUp">
+            <div class="bg-surface-container-highest/90 backdrop-blur-2xl border-2 border-primary/30 rounded-2xl p-5 shadow-2xl flex items-center gap-4 transition-all hover:scale-[1.02]">
+                <div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                    <span class="material-symbols-outlined">check_circle</span>
+                </div>
+                <div class="flex-grow">
+                    <p id="successTitle" class="font-bold text-white"></p>
+                    <p id="successPath" class="text-xs text-on-surface-variant truncate"></p>
+                </div>
+                <button onclick="cerrarModal()" class="text-on-surface-variant hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="w-full py-8 px-12 flex flex-col md:flex-row justify-between items-center gap-4 border-t border-white/5 bg-surface-container-low/30 mt-auto">
+        <p class="text-xs font-medium Inter tracking-widest uppercase text-slate-500">© 2026 Aurora DL</p>
+        <p class="text-xs text-slate-600">Ctrl+V: auto-detectar | Enter: procesar | 1-5: vistas</p>
+    </footer>
+
+    <script>
+        // ================== i18n ==================
+        const translations = {
+            es: {
+                nav: { inicio: 'Inicio', playlists: 'Playlists', cola: 'Cola', estadisticas: 'Stats', historial: 'Historial' },
+                sidebar: { usuario: 'Usuario', pro: 'Descargador Pro', descargas: 'Descargas', cola: 'Cola', sesion: 'Sesión actual', descargasCount: 'Descargas:' },
+                hero: { title: 'Descarga la <span class="text-primary italic">esencia</span> de internet.', subtitle: 'Videos, audios y playlists de YouTube, TikTok, Instagram, Twitter y más.' },
+                input: { placeholder: 'Pega aquí YouTube, TikTok, Instagram, Twitter...', btnProcesar: 'Procesar' },
+                quality: { label: 'Calidad:', auto: 'Óptima (Automática)' },
+                subtitles: { label: 'Subtítulos:', none: 'No disponibles', select: 'Seleccionar idioma' },
+                trim: { toggle: 'Recortar segmento', start: 'Inicio (seg)', end: 'Fin (seg)' },
+                download: { mp3: '🎵 Descargar MP3', mp4: '🎬 Descargar MP4', processing: 'Procesando...', downloading: 'Descargando...', converting: 'Convirtiendo...' },
+                cards: { privacidad: 'Privacidad Total', privacidadDesc: 'Archivos gestionados localmente.', consejo: 'Consejo', consejoDesc: 'Arrastra URLs directamente a la página.', shortcuts: 'Atajos' },
+                playlist: { placeholder: 'Enlace de la Playlist...', btnAnalizar: 'Analizar Playlist', videos: 'Videos:', descargarMp3: '🎵 Descargar toda en MP3', descargarMp4: '🎬 Descargar toda en MP4' },
+                cola: { titulo: 'Cola de Descargas', limpiar: 'Limpiar completadas', vacio: 'No hay elementos en la cola', vacioHint: 'Agrega videos desde la vista Inicio', agregado: 'Agregado a la cola', procesando: 'Procesando', completado: 'Completado', fallido: 'Fallido', enCola: 'En cola' },
+                stats: { titulo: 'Estadísticas', total: 'Total', playlists: 'Playlists', plataformas: 'Por Plataforma', diario: 'Actividad Diaria', recortados: 'Recortados', subtitulados: 'Con subtítulos', desde: 'Desde' },
+                historial: { titulo: 'Historial', buscar: 'Buscar...', limpiar: 'Limpiar', vacio: 'Aún no tienes descargas', filtro: { todos: 'Todos', videos: 'Videos', playlists: 'Playlists', mp3: 'MP3' } },
+                drop: { title: 'Suelta la URL aquí', subtitle: 'Se procesará automáticamente' },
+                modal: { exito: '¡Descargado exitosamente!', agregadoCola: 'Agregado a la cola' },
+                errors: { urlVacia: 'Ingresa un enlace.', urlInvalida: 'Enlace no válido.' },
+                loader: { analizando: 'Analizando enlace...' },
+                platforms: { YouTube: 'YouTube', TikTok: 'TikTok', Instagram: 'Instagram', 'X (Twitter)': 'X (Twitter)', Twitch: 'Twitch', SoundCloud: 'SoundCloud' }
+            },
+            en: {
+                nav: { inicio: 'Home', playlists: 'Playlists', cola: 'Queue', estadisticas: 'Stats', historial: 'History' },
+                sidebar: { usuario: 'User', pro: 'Pro Downloader', descargas: 'Downloads', cola: 'Queue', sesion: 'Current session', descargasCount: 'Downloads:' },
+                hero: { title: 'Download the <span class="text-primary italic">essence</span> of the internet.', subtitle: 'Videos, audios and playlists from YouTube, TikTok, Instagram, Twitter and more.' },
+                input: { placeholder: 'Paste YouTube, TikTok, Instagram, Twitter link...', btnProcesar: 'Process' },
+                quality: { label: 'Quality:', auto: 'Optimal (Automatic)' },
+                subtitles: { label: 'Subtitles:', none: 'Not available', select: 'Select language' },
+                trim: { toggle: 'Trim segment', start: 'Start (sec)', end: 'End (sec)' },
+                download: { mp3: '🎵 Download MP3', mp4: '🎬 Download MP4', processing: 'Processing...', downloading: 'Downloading...', converting: 'Converting...' },
+                cards: { privacidad: 'Total Privacy', privacidadDesc: 'Files managed locally.', consejo: 'Tip', consejoDesc: 'Drag URLs directly onto the page.', shortcuts: 'Shortcuts' },
+                playlist: { placeholder: 'Playlist link...', btnAnalizar: 'Analyze Playlist', videos: 'Videos:', descargarMp3: '🎵 Download all as MP3', descargarMp4: '🎬 Download all as MP4' },
+                cola: { titulo: 'Download Queue', limpiar: 'Clear completed', vacio: 'No items in queue', vacioHint: 'Add videos from Home view', agregado: 'Added to queue', procesando: 'Processing', completado: 'Completed', fallido: 'Failed', enCola: 'Queued' },
+                stats: { titulo: 'Statistics', total: 'Total', playlists: 'Playlists', plataformas: 'By Platform', diario: 'Daily Activity', recortados: 'Trimmed', subtitulados: 'With subtitles', desde: 'Since' },
+                historial: { titulo: 'History', buscar: 'Search...', limpiar: 'Clear', vacio: 'No downloads yet', filtro: { todos: 'All', videos: 'Videos', playlists: 'Playlists', mp3: 'MP3' } },
+                drop: { title: 'Drop URL here', subtitle: 'Will be processed automatically' },
+                modal: { exito: 'Successfully downloaded!', agregadoCola: 'Added to queue' },
+                errors: { urlVacia: 'Enter a link.', urlInvalida: 'Invalid link.' },
+                loader: { analizando: 'Analyzing link...' },
+                platforms: { YouTube: 'YouTube', TikTok: 'TikTok', Instagram: 'Instagram', 'X (Twitter)': 'X (Twitter)', Twitch: 'Twitch', SoundCloud: 'SoundCloud' }
+            },
+            pt: {
+                nav: { inicio: 'Início', playlists: 'Playlists', cola: 'Fila', estadisticas: 'Stats', historial: 'Histórico' },
+                sidebar: { usuario: 'Usuário', pro: 'Baixador Pro', descargas: 'Downloads', cola: 'Fila', sesion: 'Sessão atual', descargasCount: 'Downloads:' },
+                hero: { title: 'Baixe a <span class="text-primary italic">essência</span> da internet.', subtitle: 'Vídeos, áudios e playlists do YouTube, TikTok, Instagram, Twitter e mais.' },
+                input: { placeholder: 'Cole aqui YouTube, TikTok, Instagram, Twitter...', btnProcesar: 'Processar' },
+                quality: { label: 'Qualidade:', auto: 'Ótima (Automático)' },
+                subtitles: { label: 'Legendas:', none: 'Não disponíveis', select: 'Selecionar idioma' },
+                trim: { toggle: 'Recortar segmento', start: 'Início (seg)', end: 'Fim (seg)' },
+                download: { mp3: '🎵 Baixar MP3', mp4: '🎬 Baixar MP4', processing: 'Processando...', downloading: 'Baixando...', converting: 'Convertendo...' },
+                cards: { privacidad: 'Privacidade Total', privacidadDesc: 'Arquivos gerenciados localmente.', consejo: 'Dica', consejoDesc: 'Arraste URLs diretamente para a página.', shortcuts: 'Atalhos' },
+                playlist: { placeholder: 'Link da Playlist...', btnAnalizar: 'Analisar Playlist', videos: 'Vídeos:', descargarMp3: '🎵 Baixar tudo em MP3', descargarMp4: '🎬 Baixar tudo em MP4' },
+                cola: { titulo: 'Fila de Downloads', limpiar: 'Limpar concluídos', vacio: 'Nenhum item na fila', vacioHint: 'Adicione vídeos na visão Início', agregado: 'Adicionado à fila', procesando: 'Processando', completado: 'Concluído', fallido: 'Falhou', enCola: 'Na fila' },
+                stats: { titulo: 'Estatísticas', total: 'Total', playlists: 'Playlists', plataformas: 'Por Plataforma', diario: 'Atividade Diária', recortados: 'Recortados', subtitulados: 'Com legendas', desde: 'Desde' },
+                historial: { titulo: 'Histórico', buscar: 'Buscar...', limpiar: 'Limpar', vacio: 'Ainda sem downloads', filtro: { todos: 'Todos', videos: 'Vídeos', playlists: 'Playlists', mp3: 'MP3' } },
+                drop: { title: 'Solte a URL aqui', subtitle: 'Será processado automaticamente' },
+                modal: { exito: 'Baixado com sucesso!', agregadoCola: 'Adicionado à fila' },
+                errors: { urlVacia: 'Insira um link.', urlInvalida: 'Link inválido.' },
+                loader: { analizando: 'Analisando link...' },
+                platforms: { YouTube: 'YouTube', TikTok: 'TikTok', Instagram: 'Instagram', 'X (Twitter)': 'X (Twitter)', Twitch: 'Twitch', SoundCloud: 'SoundCloud' }
+            }
+        };
+
+        let currentLang = localStorage.getItem('aurora_lang') || 'es';
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('aurora_lang', lang);
+            updateUILanguage();
+            toggleLangDropdown(false);
         }
-    }
 
-    // Usaremos dinámicamente el IP donde está alojado el frontend para que funcione en el celular
-    const API_URL = 'http://' + (window.location.hostname || 'localhost') + ':5000/api';
-
-    // --- LOGICA DE VIDEO ÚNICO ---
-    async function obtenerInfo() {
-        const urlInput = document.getElementById('videoUrl').value.trim();
-        const btn = document.getElementById('btnProcesar');
-        const loader = document.getElementById('loader');
-        const errorMsg = document.getElementById('errorMsg');
-        const resultCard = document.getElementById('resultCard');
-        const successModal = document.getElementById('successModal');
-
-        if(!urlInput) return;
-
-        errorMsg.style.display = 'none';
-        resultCard.style.display = 'none';
-        successModal.style.display = 'none';
-        
-        loader.style.display = 'flex';
-        document.getElementById('loaderText').innerText = "Analizando enlace mediante API...";
-        btn.disabled = true;
-
-        try {
-            const response = await fetch(API_URL + '/info', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: urlInput })
+        function updateUILanguage() {
+            const t = translations[currentLang];
+            const flags = { es: '🇪🇸', en: '🇺🇸', pt: '🇧🇷' };
+            const codes = { es: 'ES', en: 'EN', pt: 'PT' };
+            document.getElementById('currentLangFlag').textContent = flags[currentLang];
+            document.getElementById('currentLangCode').textContent = codes[currentLang];
+            document.querySelectorAll('.lang-option').forEach(opt => {
+                opt.classList.toggle('active', opt.dataset.lang === currentLang);
             });
-            
-            const data = await response.json();
-            
-            if(!response.ok || data.error) {
-                throw new Error(data.error || 'Error al obtener la información');
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.dataset.i18n;
+                const keys = key.split('.');
+                let value = t;
+                for (const k of keys) { value = value?.[k]; }
+                if (value) {
+                    el.innerHTML = value.includes('<span') ? value : value;
+                }
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.dataset.i18nPlaceholder;
+                const keys = key.split('.');
+                let value = t;
+                for (const k of keys) { value = value?.[k]; }
+                if (value) el.placeholder = value;
+            });
+            document.getElementById('videoUrl').placeholder = t.input.placeholder;
+            document.getElementById('txtBtnMp3').textContent = t.download.mp3;
+            document.getElementById('txtBtnMp4').textContent = t.download.mp4;
+            document.getElementById('p-txtBtnMp3').textContent = t.playlist.descargarMp3;
+            document.getElementById('p-txtBtnMp4').textContent = t.playlist.descargarMp4;
+            document.documentElement.lang = currentLang;
+        }
+
+        function toggleLangDropdown(forceState) {
+            const selector = document.getElementById('langSelector');
+            if (forceState === false) selector.classList.remove('open');
+            else if (forceState === true) selector.classList.add('open');
+            else selector.classList.toggle('open');
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!document.getElementById('langSelector').contains(e.target)) {
+                document.getElementById('langSelector').classList.remove('open');
+            }
+        });
+
+        // ================== TEMA ==================
+        function initTheme() {
+            const saved = localStorage.getItem('aurora_theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === 'light' || (!saved && !prefersDark)) {
+                document.documentElement.classList.remove('dark');
+                document.documentElement.classList.add('light');
+            } else {
+                document.documentElement.classList.add('dark');
+                document.documentElement.classList.remove('light');
+            }
+            updateThemeIcons();
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            if (isDark) {
+                html.classList.remove('dark'); html.classList.add('light');
+                localStorage.setItem('aurora_theme', 'light');
+            } else {
+                html.classList.remove('light'); html.classList.add('dark');
+                localStorage.setItem('aurora_theme', 'dark');
+            }
+            updateThemeIcons();
+        }
+
+        function updateThemeIcons() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const iconDark = document.getElementById('themeIconDark');
+            const iconLight = document.getElementById('themeIconLight');
+            if (iconDark && iconLight) {
+                iconDark.classList.toggle('hidden', isDark);
+                iconLight.classList.toggle('hidden', !isDark);
+            }
+        }
+
+        // ================== WEBSOCKET ==================
+        const socket = io('http://' + (window.location.hostname || 'localhost') + ':5000');
+        let activeDownloads = {};
+
+        socket.on('connect', () => console.log('WebSocket conectado'));
+
+        socket.on('download_progress', (data) => {
+            const { session_id, progress, status, speed, eta } = data;
+            if (activeDownloads[session_id]) {
+                const progressBar = document.getElementById('progressBar');
+                const progressPercent = document.getElementById('progressPercent');
+                const progressStatus = document.getElementById('progressStatus');
+                const progressDetails = document.getElementById('progressDetails');
+                const progressSpeed = document.getElementById('progressSpeed');
+                const progressEta = document.getElementById('progressEta');
+
+                if (progressBar) progressBar.style.width = progress + '%';
+                if (progressPercent) progressPercent.textContent = Math.round(progress) + '%';
+                if (progressStatus) progressStatus.textContent = status === 'finished' ? '¡Completado!' : 'Descargando...';
+
+                if (speed !== undefined && eta !== undefined) {
+                    progressDetails.classList.remove('hidden');
+                    progressSpeed.textContent = '⚡ ' + speed;
+                    progressEta.textContent = '⏱ ' + eta;
+                }
+            }
+        });
+
+        socket.on('queue_job_progress', (data) => {
+            renderCola();
+        });
+
+        socket.on('queue_job_update', (data) => {
+            renderCola();
+            if (data.status === 'completed') {
+                sendNotif('Cola: Completado', data.title || 'Descarga completada');
+            } else if (data.status === 'failed') {
+                sendNotif('Cola: Error', data.error || 'Error en descarga');
+            }
+        });
+
+        // ================== UTILIDADES ==================
+        const cache = new Map();
+        const API_URL = 'http://' + (window.location.hostname || 'localhost') + ':5000/api';
+
+        function validarUrl(url) {
+            const patterns = [
+                /youtube\.com\/watch/, /youtu\.be\//, /youtube\.com\/shorts\//,
+                /tiktok\.com\//, /instagram\.com\//, /twitter\.com\//, /x\.com\//,
+                /twitch\.tv\//, /soundcloud\.com\//, /facebook\.com\//,
+                /dailymotion\.com\//, /vimeo\.com\//, /reddit\.com\//,
+                /youtube\.com\/playlist/
+            ];
+            return patterns.some(p => p.test(url));
+        }
+
+        function validarPlaylistUrl(url) {
+            return /youtube\.com\/playlist/.test(url) || /list=/.test(url);
+        }
+
+        function show(el) { el.style.display = 'flex'; }
+        function hide(el) { el.style.display = 'none'; }
+        function grid(el) { el.style.display = 'grid'; }
+        function block(el) { el.style.display = 'block'; }
+
+        function showError(errorEl, textEl, message) {
+            textEl.textContent = message;
+            errorEl.style.display = 'flex';
+            errorEl.classList.remove('hidden');
+            setTimeout(() => errorEl.classList.add('animate-slideUp'), 10);
+        }
+
+        function extraerVideoId(url) {
+            const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]+)/);
+            return match ? match[1] : null;
+        }
+
+        function formatNumber(n) {
+            if (!n) return '0';
+            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+            return n.toString();
+        }
+
+        // ================== NOTIFICACIONES ==================
+        let notifEnabled = false;
+
+        function requestNotifPermission() {
+            if (!('Notification' in window)) return;
+            Notification.requestPermission().then(perm => {
+                notifEnabled = perm === 'granted';
+                localStorage.setItem('aurora_notif', notifEnabled.toString());
+            });
+        }
+
+        function sendNotif(title, body) {
+            if (!notifEnabled || !('Notification' in window)) return;
+            if (Notification.permission === 'granted') {
+                new Notification(title, { body, icon: '🌌' });
+            }
+        }
+
+        // ================== HISTORIAL ==================
+        let historial = JSON.parse(localStorage.getItem('aurora_historial') || '[]');
+        let downloadCount = parseInt(localStorage.getItem('aurora_download_count') || '0');
+
+        function actualizarEstadisticas() {
+            document.getElementById('statDownloads').textContent = downloadCount;
+        }
+
+        function agregarAlHistorial(item) {
+            historial.unshift({ ...item, fecha: new Date().toISOString(), id: Date.now() });
+            if (historial.length > 100) historial = historial.slice(0, 100);
+            localStorage.setItem('aurora_historial', JSON.stringify(historial));
+            downloadCount++;
+            localStorage.setItem('aurora_download_count', downloadCount.toString());
+            actualizarEstadisticas();
+        }
+
+        function renderizarHistorial(items) {
+            const lista = document.getElementById('historialLista');
+            const vacio = document.getElementById('historialVacio');
+            const data = items || historial;
+
+            if (data.length === 0) {
+                lista.style.display = 'none'; lista.classList.add('hidden');
+                vacio.style.display = 'block';
+                return;
             }
 
-            document.getElementById('resTitle').textContent = data.title || 'Video sin título';
-            document.getElementById('resThumb').src = data.thumbnail || '';
-            document.getElementById('resDuration').textContent = `${data.duration || '--'}`;
-            
-            const qSelect = document.getElementById('videoQuality');
-            if (qSelect) {
-                qSelect.innerHTML = '<option value="">Óptima (Automática)</option>';
-                if(data.qualities && data.qualities.length > 0) {
-                    data.qualities.forEach(q => {
-                        qSelect.innerHTML += `<option value="${q}">${q}p</option>`;
-                    });
+            vacio.style.display = 'none';
+            lista.style.display = 'grid'; lista.classList.remove('hidden');
+
+            lista.innerHTML = data.map(item => `
+                <div class="bg-surface-container-high/40 backdrop-blur border border-white/5 rounded-xl p-4 flex gap-4 animate-slideUp">
+                    <img src="${item.thumbnail || ''}" alt="" class="w-24 h-16 object-cover rounded-lg flex-shrink-0 bg-white/5"/>
+                    <div class="flex-grow min-w-0">
+                        <p class="font-medium text-white truncate">${item.title || 'Sin título'}</p>
+                        <p class="text-xs text-on-surface-variant">${item.type === 'playlist' ? '📋 Playlist' : '🎬 Video'} • ${item.format?.toUpperCase() || 'MP4'} ${item.platform ? '• ' + item.platform : ''}</p>
+                        <p class="text-xs text-on-surface-variant/60">${new Date(item.fecha).toLocaleDateString()}</p>
+                    </div>
+                    <div class="flex items-center"><span class="material-symbols-outlined text-primary/50">check_circle</span></div>
+                </div>
+            `).join('');
+        }
+
+        function filtrarHistorial() {
+            const search = (document.getElementById('historialSearch')?.value || '').toLowerCase();
+            const filter = document.getElementById('historialFilter')?.value || 'all';
+
+            let filtered = historial;
+            if (search) filtered = filtered.filter(i => (i.title || '').toLowerCase().includes(search));
+            if (filter === 'video') filtered = filtered.filter(i => i.type === 'video');
+            else if (filter === 'playlist') filtered = filtered.filter(i => i.type === 'playlist');
+            else if (filter === 'mp3') filtered = filtered.filter(i => i.format === 'mp3');
+
+            renderizarHistorial(filtered);
+        }
+
+        function limpiarHistorial() {
+            if (confirm('¿Limpiar todo el historial?')) {
+                historial = [];
+                localStorage.removeItem('aurora_historial');
+                renderizarHistorial();
+            }
+        }
+
+        // ================== COLA DE DESCARGAS ==================
+        let queueData = [];
+
+        async function agregarACola() {
+            const url = document.getElementById('videoUrl').value.trim();
+            const quality = document.getElementById('videoQuality')?.value || '';
+            const title = document.getElementById('resTitle')?.textContent || '';
+            const thumbnail = document.getElementById('resThumb')?.src || '';
+            const t = translations[currentLang];
+
+            if (!url) return;
+
+            try {
+                const response = await fetch(API_URL + '/queue/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, format: 'mp4', quality, title, thumbnail })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    mostrarModal(t.modal.agregadoCola, `Posición #${data.position}`);
+                    renderCola();
+                }
+            } catch (e) {
+                console.error('Error al agregar a cola:', e);
+            }
+        }
+
+        async function renderCola() {
+            try {
+                const response = await fetch(API_URL + '/queue');
+                const data = await response.json();
+                queueData = data.queue || [];
+            } catch (e) { queueData = []; }
+
+            const lista = document.getElementById('colaLista');
+            const vacio = document.getElementById('colaVacia');
+            const badge = document.getElementById('sidebarQueueCount');
+
+            const activeJobs = queueData.filter(j => j.status === 'queued' || j.status === 'processing');
+            if (badge) {
+                if (activeJobs.length > 0) {
+                    badge.textContent = activeJobs.length;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
                 }
             }
 
-            loader.style.display = 'none';
-            resultCard.style.display = 'grid';
+            if (queueData.length === 0) {
+                lista.style.display = 'none'; lista.classList.add('hidden');
+                vacio.style.display = 'block';
+                return;
+            }
 
-        } catch (error) {
-            loader.style.display = 'none';
-            document.getElementById('errorText').textContent = "Error: " + error.message;
-            errorMsg.style.display = 'flex';
-        } finally {
-            btn.disabled = false;
-        }
-    }
+            vacio.style.display = 'none';
+            lista.style.display = 'block'; lista.classList.remove('hidden');
 
-    // Función para descargar a la carpeta local
-    async function descargarArchivo(formato) {
-        const urlInput = document.getElementById('videoUrl').value.trim();
-        const errorMsg = document.getElementById('errorMsg');
-        const btnMp4 = document.getElementById('btnMp4');
-        const btnMp3 = document.getElementById('btnMp3');
-        const txtMp4 = document.getElementById('txtBtnMp4');
-        const txtMp3 = document.getElementById('txtBtnMp3');
-        const successModal = document.getElementById('successModal');
-        
-        const qSelect = document.getElementById('videoQuality');
-        const qualityVal = qSelect ? qSelect.value : '';
+            const t = translations[currentLang];
+            const statusLabels = { queued: t.cola.enCola, processing: t.cola.procesando, completed: t.cola.completado, failed: t.cola.fallido };
+            const statusColors = { queued: 'text-on-surface-variant', processing: 'text-secondary', completed: 'text-primary', failed: 'text-error' };
 
-        errorMsg.style.display = 'none';
-        const originalTextMp4 = txtMp4.innerText;
-        const originalTextMp3 = txtMp3.innerText;
-
-        btnMp4.disabled = true;
-        btnMp3.disabled = true;
-        successModal.style.display = 'none';
-
-        if(formato === 'mp3') {
-            txtMp3.innerText = "⏳ Convirtiendo...";
-        } else {
-            txtMp4.innerText = "⏳ Descargando...";
+            lista.innerHTML = queueData.map(job => `
+                <div class="queue-item bg-surface-container-high/40 backdrop-blur border border-white/5 rounded-xl p-4 flex items-center gap-4">
+                    <img src="${job.thumbnail || ''}" alt="" class="w-16 h-10 object-cover rounded-lg flex-shrink-0 bg-white/5"/>
+                    <div class="flex-grow min-w-0">
+                        <p class="font-medium text-white truncate text-sm">${job.title || job.url}</p>
+                        <p class="text-xs text-on-surface-variant">${job.format?.toUpperCase() || 'MP4'} ${job.quality ? '• ' + job.quality + 'p' : ''}</p>
+                    </div>
+                    <span class="text-xs font-bold ${statusColors[job.status] || ''}">${statusLabels[job.status] || job.status}</span>
+                    ${job.status === 'queued' ? `<button onclick="eliminarDeCola(${job.id})" class="p-1 hover:text-error transition-colors"><span class="material-symbols-outlined text-sm">close</span></button>` : ''}
+                </div>
+            `).join('');
         }
 
-        try {
-            const response = await fetch(API_URL + '/download', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: urlInput, format: formato, quality: qualityVal })
+        async function eliminarDeCola(jobId) {
+            await fetch(API_URL + '/queue/' + jobId, { method: 'DELETE' });
+            renderCola();
+        }
+
+        async function limpiarCola() {
+            await fetch(API_URL + '/queue/clear', { method: 'POST' });
+            renderCola();
+        }
+
+        // ================== ESTADÍSTICAS ==================
+        async function cargarEstadisticas() {
+            try {
+                const response = await fetch(API_URL + '/stats');
+                const stats = await response.json();
+
+                document.getElementById('statTotal').textContent = stats.total_downloads || 0;
+                document.getElementById('statMp3').textContent = stats.total_mp3 || 0;
+                document.getElementById('statMp4').textContent = stats.total_mp4 || 0;
+                document.getElementById('statPlaylists').textContent = stats.total_playlists || 0;
+                document.getElementById('statTrimmed').textContent = stats.total_trimmed || 0;
+                document.getElementById('statSubtitled').textContent = stats.total_subtitled || 0;
+                document.getElementById('statSince').textContent = stats.started_at ? new Date(stats.started_at).toLocaleDateString() : '-';
+
+                // Plataformas
+                const platformsEl = document.getElementById('statsPlatforms');
+                if (stats.platforms && Object.keys(stats.platforms).length > 0) {
+                    const max = Math.max(...Object.values(stats.platforms));
+                    platformsEl.innerHTML = Object.entries(stats.platforms).map(([name, count]) => `
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-on-surface-variant w-24 truncate">${name}</span>
+                            <div class="flex-grow h-2 bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style="width: ${(count / max) * 100}%"></div>
+                            </div>
+                            <span class="text-xs text-white font-bold w-8 text-right">${count}</span>
+                        </div>
+                    `).join('');
+                }
+
+                // Actividad diaria
+                const dailyEl = document.getElementById('statsDaily');
+                if (stats.daily && Object.keys(stats.daily).length > 0) {
+                    const entries = Object.entries(stats.daily).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 7).reverse();
+                    const max = Math.max(...entries.map(e => e[1]));
+                    dailyEl.innerHTML = entries.map(([date, count]) => `
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-on-surface-variant w-20">${date.slice(5)}</span>
+                            <div class="flex-grow h-2 bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-secondary to-primary rounded-full" style="width: ${(count / max) * 100}%"></div>
+                            </div>
+                            <span class="text-xs text-white font-bold w-8 text-right">${count}</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) { console.error('Error cargando stats:', e); }
+        }
+
+        // ================== NAVEGACIÓN ==================
+        function switchView(view) {
+            const views = ['inicio', 'playlists', 'cola', 'estadisticas', 'historial'];
+            const navIds = ['navInicio', 'navPlaylists', 'navCola', 'navEstadisticas', 'navHistorial'];
+
+            views.forEach((v, i) => {
+                const el = document.getElementById('view-' + v);
+                if (el) el.style.display = v === view ? 'block' : 'none';
+
+                const navEl = document.getElementById(navIds[i]);
+                if (navEl) {
+                    if (v === view) {
+                        navEl.className = "text-violet-400 font-bold border-b-2 border-primary pb-1 cursor-pointer transition-all";
+                    } else {
+                        navEl.className = "text-slate-400 hover:text-white transition-colors cursor-pointer";
+                    }
+                }
             });
-            
-            if(!response.ok) {
+
+            if (view === 'historial') renderizarHistorial();
+            if (view === 'cola') renderCola();
+            if (view === 'estadisticas') cargarEstadisticas();
+        }
+
+        // ================== PREVIEW ==================
+        let currentVideoId = null;
+        let previewVisible = false;
+
+        function togglePreview() {
+            const iframe = document.getElementById('videoPreview');
+            const thumb = document.getElementById('resThumb');
+            const btn = document.getElementById('btnPreview');
+
+            if (!previewVisible) {
+                iframe.src = `https://www.youtube.com/embed/${currentVideoId}?autoplay=1`;
+                iframe.classList.remove('hidden'); thumb.classList.add('hidden');
+                btn.innerHTML = '<span class="material-symbols-outlined text-6xl text-white/80">pause_circle</span>';
+            } else {
+                iframe.src = ''; iframe.classList.add('hidden'); thumb.classList.remove('hidden');
+                btn.innerHTML = '<span class="material-symbols-outlined text-6xl text-white/80">play_circle</span>';
+            }
+            previewVisible = !previewVisible;
+        }
+
+        function toggleTrimSection() {
+            const inputs = document.getElementById('trimInputs');
+            inputs.classList.toggle('hidden');
+        }
+
+        // ================== VIDEO ÚNICO ==================
+        let selectedSubtitle = null;
+
+        async function obtenerInfo() {
+            const urlInput = document.getElementById('videoUrl').value.trim();
+            const btn = document.getElementById('btnProcesar');
+            const loader = document.getElementById('loader');
+            const errorMsg = document.getElementById('errorMsg');
+            const resultCard = document.getElementById('resultCard');
+            const t = translations[currentLang];
+
+            if (!urlInput) { showError(errorMsg, document.getElementById('errorText'), t.errors.urlVacia); return; }
+            if (!validarUrl(urlInput)) { showError(errorMsg, document.getElementById('errorText'), t.errors.urlInvalida); return; }
+
+            const cacheKey = 'video_' + urlInput;
+            if (cache.has(cacheKey)) { mostrarResultadoVideo(cache.get(cacheKey)); return; }
+
+            hide(errorMsg); hide(resultCard); hide(document.getElementById('successModal'));
+            show(loader);
+            document.getElementById('loaderText').innerText = t.loader.analizando;
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(API_URL + '/info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: urlInput })
+                });
                 const data = await response.json();
-                throw new Error(data.error || 'Error en la descarga');
-            }
-
-            // Procesar el binario (Video o Audio real)
-            const blob = await response.blob();
-            const downloadUrl = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = downloadUrl;
-            
-            // Extraer nombre del archivo enviado por Flask
-            const contentDisposition = response.headers.get('Content-Disposition');
-            let filename = document.getElementById('resTitle').textContent + (formato === 'mp3' ? '.mp3' : '.mp4');
-            if (contentDisposition && contentDisposition.includes('filename=')) {
-                filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
-            }
-            
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            window.URL.revokeObjectURL(downloadUrl);
-
-            document.getElementById('successTitle').innerText = "¡Descargado en tu dispositivo!";
-            document.getElementById('successPath').innerText = "El archivo se guardó en tu carpeta local.";
-            successModal.style.display = 'flex';
-            
-        } catch (error) {
-            document.getElementById('errorText').textContent = "Error de descarga: " + error.message;
-            errorMsg.style.display = 'flex';
-        } finally {
-            btnMp4.disabled = false;
-            btnMp3.disabled = false;
-            txtMp4.innerText = originalTextMp4;
-            txtMp3.innerText = originalTextMp3;
+                if (!response.ok || data.error) throw new Error(data.error || 'Error');
+                cache.set(cacheKey, data);
+                mostrarResultadoVideo(data);
+            } catch (error) {
+                hide(loader);
+                showError(errorMsg, document.getElementById('errorText'), "Error: " + error.message);
+            } finally { btn.disabled = false; }
         }
-    }
 
-    // --- LOGICA DE PLAYLISTS ---
-    async function obtenerPlaylistInfo() {
-        const urlInput = document.getElementById('playlistUrl').value.trim();
-        const btn = document.getElementById('btnPProcesar');
-        const loader = document.getElementById('p-loader');
-        const errorMsg = document.getElementById('p-errorMsg');
-        const resultCard = document.getElementById('p-resultCard');
-        const successModal = document.getElementById('successModal');
+        function mostrarResultadoVideo(data) {
+            const loader = document.getElementById('loader');
+            const resultCard = document.getElementById('resultCard');
+            const t = translations[currentLang];
 
-        if(!urlInput) return;
+            document.getElementById('resTitle').textContent = data.title || 'Video sin título';
+            document.getElementById('resThumb').src = data.thumbnail || '';
+            document.getElementById('resDuration').textContent = data.duration || '--:--';
 
-        errorMsg.style.display = 'none';
-        resultCard.style.display = 'none';
-        successModal.style.display = 'none';
-        
-        loader.style.display = 'flex';
-        btn.disabled = true;
+            currentVideoId = extraerVideoId(document.getElementById('videoUrl').value.trim());
 
-        try {
-            const response = await fetch(API_URL + '/playlist/info', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: urlInput })
-            });
-            
-            const data = await response.json();
-            
-            if(!response.ok || data.error) {
-                throw new Error(data.error || 'Error listando la playlist');
+            const qSelect = document.getElementById('videoQuality');
+            if (qSelect) {
+                qSelect.innerHTML = `<option value="">${t.quality.auto}</option>`;
+                if (data.qualities?.length > 0) {
+                    data.qualities.forEach(q => { qSelect.innerHTML += `<option value="${q}">${q}p</option>`; });
+                }
             }
+
+            // Plataforma
+            const platformEl = document.getElementById('resPlatform');
+            const platformNameEl = document.getElementById('resPlatformName');
+            if (data.platform) {
+                platformEl.classList.remove('hidden');
+                platformNameEl.textContent = t.platforms[data.platform] || data.platform;
+                document.getElementById('statPlatform').textContent = data.platform;
+            }
+
+            // Meta (uploader, views)
+            const metaEl = document.getElementById('resMeta');
+            if (data.uploader || data.view_count) {
+                metaEl.classList.remove('hidden');
+                if (data.uploader) document.querySelector('#resUploader span:last-child').textContent = data.uploader;
+                if (data.view_count) document.querySelector('#resViews span:last-child').textContent = formatNumber(data.view_count) + ' views';
+            }
+
+            // Subtítulos
+            const subsSection = document.getElementById('subtitlesSection');
+            const subsList = document.getElementById('subtitlesList');
+            if (data.subtitles && Object.keys(data.subtitles).length > 0) {
+                subsSection.classList.remove('hidden');
+                subsList.innerHTML = Object.entries(data.subtitles).map(([lang, count]) => {
+                    const flag = langToFlag(lang);
+                    return `<span class="subtitle-chip" onclick="selectSubtitle('${lang}', this)">${flag} ${lang} (${count})</span>`;
+                }).join('');
+                selectedSubtitle = null;
+            } else {
+                subsSection.classList.add('hidden');
+                selectedSubtitle = null;
+            }
+
+            // Trim section
+            document.getElementById('trimSection').classList.remove('hidden');
+
+            hide(loader);
+            grid(resultCard);
+        }
+
+        function langToFlag(lang) {
+            const flags = { es: '🇪🇸', en: '🇬🇧', pt: '🇧🇷', fr: '🇫🇷', de: '🇩🇪', it: '🇮🇹', ja: '🇯🇵', ko: '🇰🇷', zh: '🇨🇳', ru: '🇷🇺', ar: '🇸🇦', hi: '🇮🇳' };
+            const short = lang.split('-')[0];
+            return flags[short] || '🌐';
+        }
+
+        function selectSubtitle(lang, el) {
+            document.querySelectorAll('.subtitle-chip').forEach(c => c.classList.remove('selected'));
+            if (selectedSubtitle === lang) {
+                selectedSubtitle = null;
+            } else {
+                el.classList.add('selected');
+                selectedSubtitle = lang;
+            }
+        }
+
+        async function descargarArchivo(formato) {
+            const urlInput = document.getElementById('videoUrl').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            const btnMp4 = document.getElementById('btnMp4');
+            const btnMp3 = document.getElementById('btnMp3');
+            const txtMp4 = document.getElementById('txtBtnMp4');
+            const txtMp3 = document.getElementById('txtBtnMp3');
+            const successModal = document.getElementById('successModal');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressStatus = document.getElementById('progressStatus');
+            const progressDetails = document.getElementById('progressDetails');
+            const t = translations[currentLang];
+
+            const quality = document.getElementById('videoQuality')?.value || '';
+            const videoTitle = document.getElementById('resTitle').textContent;
+            const trimStart = document.getElementById('trimStart')?.value;
+            const trimEnd = document.getElementById('trimEnd')?.value;
+            const isTrimmed = trimStart && trimStart !== '0' || trimEnd;
+
+            hide(errorMsg);
+            const originalTextMp4 = txtMp4.innerText;
+            const originalTextMp3 = txtMp3.innerText;
+
+            btnMp4.disabled = true; btnMp3.disabled = true;
+            hide(successModal);
+
+            show(progressContainer);
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressStatus.textContent = 'Conectando...';
+            progressDetails.classList.add('hidden');
+
+            const loadingText = formato === 'mp3' ? t.download.converting : t.download.downloading;
+            if (formato === 'mp3') txtMp3.innerText = loadingText;
+            else txtMp4.innerText = loadingText;
+
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                if (progress < 85) {
+                    progress += Math.random() * 10;
+                    if (progress > 85) progress = 85;
+                    progressBar.style.width = progress + '%';
+                    progressPercent.textContent = Math.round(progress) + '%';
+                }
+            }, 500);
+
+            try {
+                const body = { url: urlInput, format: formato, quality };
+                if (selectedSubtitle) body.subtitle_lang = selectedSubtitle;
+                if (isTrimmed) {
+                    if (trimStart) body.start_time = trimStart;
+                    if (trimEnd) body.end_time = trimEnd;
+                }
+
+                const response = await fetch(API_URL + '/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Error en la descarga');
+                }
+
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                progressPercent.textContent = '100%';
+                progressStatus.textContent = '¡Completado!';
+
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = videoTitle + (formato === 'mp3' ? '.mp3' : '.mp4');
+                if (contentDisposition && contentDisposition.includes('filename=')) {
+                    filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
+                }
+
+                a.download = filename;
+                document.body.appendChild(a); a.click(); a.remove();
+                window.URL.revokeObjectURL(downloadUrl);
+
+                const platform = document.getElementById('resPlatformName')?.textContent || '';
+                agregarAlHistorial({
+                    title: videoTitle,
+                    thumbnail: document.getElementById('resThumb').src,
+                    format: formato,
+                    type: 'video',
+                    url: urlInput,
+                    platform: platform,
+                    trimmed: isTrimmed,
+                    subtitled: !!selectedSubtitle
+                });
+
+                document.getElementById('successTitle').innerText = t.modal.exito;
+                document.getElementById('successPath').innerText = filename;
+                show(successModal);
+                sendNotif(t.modal.exito, filename);
+
+                setTimeout(() => { hide(progressContainer); progressDetails.classList.add('hidden'); }, 1500);
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                hide(progressContainer);
+                showError(errorMsg, document.getElementById('errorText'), "Error: " + error.message);
+            } finally {
+                btnMp4.disabled = false; btnMp3.disabled = false;
+                txtMp4.innerText = originalTextMp4;
+                txtMp3.innerText = originalTextMp3;
+            }
+        }
+
+        // ================== PLAYLISTS ==================
+        async function obtenerPlaylistInfo() {
+            const urlInput = document.getElementById('playlistUrl').value.trim();
+            const btn = document.getElementById('btnPProcesar');
+            const loader = document.getElementById('p-loader');
+            const errorMsg = document.getElementById('p-errorMsg');
+            const resultCard = document.getElementById('p-resultCard');
+            const t = translations[currentLang];
+
+            if (!urlInput) { showError(errorMsg, document.getElementById('p-errorText'), t.errors.urlVacia); return; }
+            if (!validarPlaylistUrl(urlInput)) { showError(errorMsg, document.getElementById('p-errorText'), t.errors.urlInvalida); return; }
+
+            const cacheKey = 'playlist_' + urlInput;
+            if (cache.has(cacheKey)) { mostrarResultadoPlaylist(cache.get(cacheKey)); return; }
+
+            hide(errorMsg); hide(resultCard); hide(document.getElementById('successModal'));
+            show(loader); btn.disabled = true;
+
+            try {
+                const response = await fetch(API_URL + '/playlist/info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: urlInput })
+                });
+                const data = await response.json();
+                if (!response.ok || data.error) throw new Error(data.error || 'Error');
+                cache.set(cacheKey, data);
+                mostrarResultadoPlaylist(data);
+            } catch (error) {
+                hide(loader);
+                showError(errorMsg, document.getElementById('p-errorText'), "Error: " + error.message);
+            } finally { btn.disabled = false; }
+        }
+
+        function mostrarResultadoPlaylist(data) {
+            const loader = document.getElementById('p-loader');
+            const resultCard = document.getElementById('p-resultCard');
 
             document.getElementById('p-resTitle').textContent = data.title || 'Playlist sin título';
             document.getElementById('p-resCount').textContent = data.count || '0';
-            
-            loader.style.display = 'none';
-            resultCard.style.display = 'grid';
 
-        } catch (error) {
-            loader.style.display = 'none';
-            document.getElementById('p-errorText').textContent = "Error: " + error.message;
-            errorMsg.style.display = 'flex';
-        } finally {
-            btn.disabled = false;
-        }
-    }
-
-    async function descargarPlaylist(formato) {
-        const urlInput = document.getElementById('playlistUrl').value.trim();
-        const errorMsg = document.getElementById('p-errorMsg');
-        const btnMp4 = document.getElementById('p-btnMp4');
-        const btnMp3 = document.getElementById('p-btnMp3');
-        const txtMp4 = document.getElementById('p-txtBtnMp4');
-        const txtMp3 = document.getElementById('p-txtBtnMp3');
-        const successModal = document.getElementById('successModal');
-
-        errorMsg.style.display = 'none';
-        const originalTextMp4 = txtMp4.innerText;
-        const originalTextMp3 = txtMp3.innerText;
-
-        btnMp4.disabled = true;
-        btnMp3.disabled = true;
-        successModal.style.display = 'none';
-
-        if(formato === 'mp3') {
-            txtMp3.innerText = "⏳ Procesando toda la Playlist (Audio)...";
-        } else {
-            txtMp4.innerText = "⏳ Procesando toda la Playlist (Video)...";
-        }
-
-        try {
-            const response = await fetch(API_URL + '/playlist/download', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: urlInput, format: formato })
-            });
-            
-            const data = await response.json();
-            
-            if(!response.ok || data.error) {
-                throw new Error(data.error || 'Error localizando/descargando archivos');
+            // Lista de videos
+            const videosList = document.getElementById('p-videosList');
+            if (data.videos && data.videos.length > 0) {
+                videosList.classList.remove('hidden');
+                videosList.innerHTML = data.videos.slice(0, 20).map(v => `
+                    <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors">
+                        <img src="${v.thumbnail || ''}" alt="" class="w-16 h-9 object-cover rounded bg-white/5 flex-shrink-0"/>
+                        <div class="min-w-0 flex-grow">
+                            <p class="text-sm text-white truncate">${v.title || 'Unknown'}</p>
+                            <p class="text-xs text-on-surface-variant/60">${v.duration || ''}</p>
+                        </div>
+                    </div>
+                `).join('') + (data.videos.length > 20 ? `<p class="text-xs text-on-surface-variant/60 text-center py-2">+ ${data.videos.length - 20} más</p>` : '');
+            } else {
+                videosList.classList.add('hidden');
             }
 
-            document.getElementById('successTitle').innerText = "¡Playlist procesada y guardada!";
-            document.getElementById('successPath').innerText = "En carpeta: " + data.path;
-            successModal.style.display = 'flex';
-            
-        } catch (error) {
-            document.getElementById('p-errorText').textContent = "Error de descarga en Lote: " + error.message;
-            errorMsg.style.display = 'flex';
-        } finally {
-            btnMp4.disabled = false;
-            btnMp3.disabled = false;
-            txtMp4.innerText = originalTextMp4;
-            txtMp3.innerText = originalTextMp3;
+            hide(loader);
+            grid(resultCard);
         }
-    }
-</script>
-</body></html>
+
+        async function descargarPlaylist(formato) {
+            const urlInput = document.getElementById('playlistUrl').value.trim();
+            const errorMsg = document.getElementById('p-errorMsg');
+            const btnMp4 = document.getElementById('p-btnMp4');
+            const btnMp3 = document.getElementById('p-btnMp3');
+            const txtMp4 = document.getElementById('p-txtBtnMp4');
+            const txtMp3 = document.getElementById('p-txtBtnMp3');
+            const successModal = document.getElementById('successModal');
+            const progressContainer = document.getElementById('p-progressContainer');
+            const progressBar = document.getElementById('p-progressBar');
+            const progressPercent = document.getElementById('p-progressPercent');
+            const progressStatus = document.getElementById('p-progressStatus');
+            const playlistTitle = document.getElementById('p-resTitle').textContent;
+            const t = translations[currentLang];
+
+            hide(errorMsg);
+            const originalTextMp4 = txtMp4.innerText;
+            const originalTextMp3 = txtMp3.innerText;
+
+            btnMp4.disabled = true; btnMp3.disabled = true;
+            hide(successModal);
+
+            show(progressContainer);
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressStatus.textContent = 'Iniciando...';
+
+            const loadingText = formato === 'mp3' ? '⏳ Procesando Playlist (Audio)...' : '⏳ Procesando Playlist (Video)...';
+            if (formato === 'mp3') txtMp3.innerText = loadingText;
+            else txtMp4.innerText = loadingText;
+
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                if (progress < 95) {
+                    progress += Math.random() * 10;
+                    if (progress > 95) progress = 95;
+                    progressBar.style.width = progress + '%';
+                    progressPercent.textContent = Math.round(progress) + '%';
+                }
+            }, 800);
+
+            try {
+                const response = await fetch(API_URL + '/playlist/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: urlInput, format: formato })
+                });
+
+                const data = await response.json();
+                if (!response.ok || data.error) throw new Error(data.error || 'Error');
+
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                progressPercent.textContent = '100%';
+                progressStatus.textContent = '¡Completado!';
+
+                agregarAlHistorial({
+                    title: playlistTitle, thumbnail: null, format: formato,
+                    type: 'playlist', url: urlInput
+                });
+
+                document.getElementById('successTitle').innerText = "¡Playlist procesada!";
+                document.getElementById('successPath').innerText = "En: " + (data.path || 'Downloads');
+                show(successModal);
+                sendNotif("¡Playlist procesada!", playlistTitle);
+
+                setTimeout(() => hide(progressContainer), 1500);
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                hide(progressContainer);
+                showError(errorMsg, document.getElementById('p-errorText'), "Error: " + error.message);
+            } finally {
+                btnMp4.disabled = false; btnMp3.disabled = false;
+                txtMp4.innerText = originalTextMp4;
+                txtMp3.innerText = originalTextMp3;
+            }
+        }
+
+        // ================== MODAL ==================
+        function cerrarModal() { document.getElementById('successModal').style.display = 'none'; }
+        function mostrarModal(title, path) {
+            document.getElementById('successTitle').innerText = title;
+            document.getElementById('successPath').innerText = path || '';
+            const modal = document.getElementById('successModal');
+            modal.style.display = 'block';
+            modal.classList.remove('hidden');
+            setTimeout(() => cerrarModal(), 3000);
+        }
+
+        // ================== DRAG & DROP ==================
+        let dragCounter = 0;
+
+        document.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            dragCounter++;
+            document.getElementById('dropOverlay').classList.add('visible');
+        });
+
+        document.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dragCounter--;
+            if (dragCounter <= 0) {
+                dragCounter = 0;
+                document.getElementById('dropOverlay').classList.remove('visible');
+            }
+        });
+
+        document.addEventListener('dragover', (e) => e.preventDefault());
+
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragCounter = 0;
+            document.getElementById('dropOverlay').classList.remove('visible');
+
+            const text = e.dataTransfer.getData('text/plain');
+            if (text && validarUrl(text)) {
+                document.getElementById('videoUrl').value = text;
+                switchView('inicio');
+                setTimeout(() => obtenerInfo(), 300);
+            }
+        });
+
+        // ================== AUTO-DETECT CTRL+V ==================
+        document.addEventListener('paste', (e) => {
+            const text = (e.clipboardData || window.clipboardData).getData('text');
+            if (text && validarUrl(text)) {
+                const activeEl = document.activeElement;
+                const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+
+                if (!isInput) {
+                    e.preventDefault();
+                    document.getElementById('videoUrl').value = text;
+                    switchView('inicio');
+                    setTimeout(() => obtenerInfo(), 300);
+                }
+            }
+        });
+
+        // ================== ATAJOS DE TECLADO ==================
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            const keyMap = { '1': 'inicio', '2': 'playlists', '3': 'cola', '4': 'estadisticas', '5': 'historial' };
+            if (keyMap[e.key]) {
+                e.preventDefault();
+                switchView(keyMap[e.key]);
+            }
+        });
+
+        // ================== INIT ==================
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            actualizarEstadisticas();
+            updateUILanguage();
+
+            notifEnabled = localStorage.getItem('aurora_notif') === 'true';
+
+            document.getElementById('videoUrl').addEventListener('keypress', (e) => { if (e.key === 'Enter') obtenerInfo(); });
+            document.getElementById('playlistUrl').addEventListener('keypress', (e) => { if (e.key === 'Enter') obtenerPlaylistInfo(); });
+
+            // Registrar Service Worker para PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            }
+        });
+    </script>
+</body>
+</html>
