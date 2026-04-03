@@ -13,6 +13,20 @@ import yt_dlp
 from collections import OrderedDict
 from datetime import datetime, timedelta
 
+# ================== COOKIES ==================
+# Place a Netscape-format cookies.txt file next to app.py (or set env var COOKIES_FILE)
+COOKIES_FILE = os.environ.get(
+    'COOKIES_FILE',
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cookies.txt')
+)
+
+def get_cookie_opts():
+    """Return yt-dlp cookie options if a cookies.txt file is present."""
+    opts = {}
+    if os.path.isfile(COOKIES_FILE):
+        opts['cookiefile'] = COOKIES_FILE
+    return opts
+
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'frontend'), static_url_path='')
 CORS(app, expose_headers=["Content-Disposition"])
 socketio = SocketIO(app, async_mode="threading", cors_allowed_origins="*")
@@ -131,6 +145,7 @@ def process_queue():
                 'quiet': True,
                 'noplaylist': True,
                 'progress_hooks': [lambda d: queue_progress_hook(d, job['id'])],
+                **get_cookie_opts(),
             }
 
             fmt = job.get('format', 'mp4')
@@ -284,7 +299,7 @@ def get_video_info():
     if cached:
         return jsonify(cached)
 
-    ydl_opts = {'quiet': True, 'noplaylist': True}
+    ydl_opts = {'quiet': True, 'noplaylist': True, **get_cookie_opts()}
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -355,6 +370,7 @@ def download_video():
         'quiet': True,
         'noplaylist': True,
         'progress_hooks': [lambda d: progress_hook(d, session_id)],
+        **get_cookie_opts(),
     }
 
     if fmt == 'mp3':
@@ -417,7 +433,7 @@ def get_subtitles(url):
     import urllib.parse
     url = urllib.parse.unquote(url)
 
-    ydl_opts = {'quiet': True, 'noplaylist': True}
+    ydl_opts = {'quiet': True, 'noplaylist': True, **get_cookie_opts()}
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -470,6 +486,7 @@ def trim_video():
         'quiet': True,
         'noplaylist': True,
         'progress_hooks': [lambda d: progress_hook(d, session_id)],
+        **get_cookie_opts(),
     }
 
     if fmt == 'mp3':
@@ -520,7 +537,8 @@ def get_playlist_info():
     ydl_opts = {
         'extract_flat': True,
         'quiet': True,
-        'noplaylist': False
+        'noplaylist': False,
+        **get_cookie_opts(),
     }
 
     try:
@@ -568,7 +586,8 @@ def download_playlist():
         'outtmpl': os.path.join(download_folder, '%(playlist_index)03d - %(title)s.%(ext)s'),
         'ffmpeg_location': FFMPEG_EXE,
         'quiet': True,
-        'noplaylist': False
+        'noplaylist': False,
+        **get_cookie_opts(),
     }
 
     if fmt == 'mp3':
@@ -684,6 +703,15 @@ def get_stats():
     stats = load_stats()
     stats['queue_size'] = len([j for j in download_queue.get_all() if j['status'] in ['queued', 'processing']])
     return jsonify(stats)
+
+@app.route('/api/cookies/status', methods=['GET'])
+def cookies_status():
+    has_cookies = os.path.isfile(COOKIES_FILE)
+    return jsonify({
+        'has_cookies': has_cookies,
+        'path': COOKIES_FILE if has_cookies else None,
+        'size': os.path.getsize(COOKIES_FILE) if has_cookies else 0
+    })
 
 # ================== UTILIDADES ==================
 def get_platform_name(extractor):
